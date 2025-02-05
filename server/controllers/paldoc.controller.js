@@ -1,4 +1,4 @@
-import User from "../models/paldoc.models.js";
+import { User, Doctor, Appointment, Message } from "../models/paldoc.models.js";
 
 const PalDocController = {
     // controller methods will go here
