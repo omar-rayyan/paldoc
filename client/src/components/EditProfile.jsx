@@ -10,6 +10,7 @@ const initialState = {
   email: "",
   age: "",
   pic: "",
+  phonenumber: "",
   loading: false,
   oldPassword: "",
   newPassword: "",
@@ -77,9 +78,9 @@ function EditProfile() {
 
   const formSubmit = async () => {
     try {
-      const { firstName, lastName, email, age, oldPassword, newPassword, confirmNewPassword } = formState;
+      const { firstName, lastName, email, age, phonenumber, oldPassword, newPassword, confirmNewPassword } = formState;
       
-      if (!firstName || !lastName || !email || !age) {
+      if (!firstName || !lastName || !email || !age || !phonenumber) {
         notification.error({ message: "All fields are required" });
         return;
       }
@@ -94,6 +95,7 @@ function EditProfile() {
         lastName,
         email,
         age,
+        phonenumber,
         pic: file,
         oldPassword: oldPassword || undefined,
         newPassword: newPassword || undefined,
@@ -129,6 +131,10 @@ function EditProfile() {
 
           <Form.Item label="Age" required>
             <Input name="age" type="number" value={formState.age} onChange={inputChange} />
+          </Form.Item>
+
+          <Form.Item label="Phone number" required>
+            <Input name="phonenumber" value={formState.phonenumber} onChange={inputChange} />
           </Form.Item>
 
           <Form.Item label="Profile Picture">

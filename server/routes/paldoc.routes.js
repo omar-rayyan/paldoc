@@ -10,6 +10,8 @@ export default (app) => {
 
     app.get("/api/paldoc/authenticate", authenticate, PalDocController.authenticate);
 
+    app.get("/api/paldoc/getdoctors", PalDocController.getDoctors);
+
     app.get("/api/paldoc/getuser", authenticate, PalDocController.getUser);
 
     app.get("/api/paldoc/doctor-status/:userId", authenticate, PalDocController.doctorStatus);
