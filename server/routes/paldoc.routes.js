@@ -15,4 +15,6 @@ export default (app) => {
     app.get("/api/paldoc/doctor-status/:userId", authenticate, PalDocController.doctorStatus);
 
     app.put("/api/paldoc/profile/update", authenticate, PalDocController.updateProfile);
+  
+    app.get("/api/paldoc/doctor-status/:userId", authenticate, PalDocController.doctorStatus);
 };
