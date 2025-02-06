@@ -4,6 +4,7 @@ import RegisterPage from "./components/RegisterPage.jsx";
 import LoginPage from "./components/LoginPage.jsx";
 import ProfilePage from "./components/ProfilePage.jsx";
 import { Routes, Route } from 'react-router-dom';
+import DoctorsPage from "./components/OurDoctor.jsx";
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="*" element={<NotFound />} />
+        <Route path="/doctors" element={<DoctorsPage />} />
     </Routes>
   );
 }
