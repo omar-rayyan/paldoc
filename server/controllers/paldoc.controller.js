@@ -103,12 +103,14 @@ const PalDocController = {
                     return res.status(401).json({ error: "Incorrect password." });
                 }
             }
+            if (newPassword) {
+                user.password = newPassword;
+            }
             user.firstName = firstName;
             user.lastName = lastName;
             user.email = email;
             user.age = age;
             user.pic = pic;
-            user.password = newPassword;
             await user.save();
             res.json({ msg: "Profile updated successfully." });
         } catch (error) {
