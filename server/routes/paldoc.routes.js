@@ -10,5 +10,11 @@ export default (app) => {
 
     app.get("/api/paldoc/authenticate", authenticate, PalDocController.authenticate);
 
+    app.get("/api/paldoc/getuser", authenticate, PalDocController.getUser);
+
+    app.get("/api/paldoc/doctor-status/:userId", authenticate, PalDocController.doctorStatus);
+
+    app.put("/api/paldoc/profile/update", authenticate, PalDocController.updateProfile);
+  
     app.get("/api/paldoc/doctor-status/:userId", authenticate, PalDocController.doctorStatus);
 };

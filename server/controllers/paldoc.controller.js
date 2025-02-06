@@ -79,6 +79,42 @@ const PalDocController = {
             res.status(500).json({ error: "Internal server error." });
         }
     },
+    getUser: async (req, res) => {
+        try {
+            const user = await User.findById(req.user.id);
+            if (!user) {
+                return res.status(404).json({ error: "User not found." });
+            }
+            res.json(user);
+        } catch (error) {
+            res.status(500).json({ error: "Internal server error." });
+        }
+    },
+    updateProfile: async (req, res) => {
+        try {
+            const user = await User.findById(req.user.id);
+            if (!user) {
+                return res.status(404).json({ error: "User not found." });
+            }
+            const { firstName, lastName, email, age, pic, oldPassword, newPassword } = req.body;
+            if (oldPassword && newPassword) {
+                const correctPassword = await bcrypt.compare(oldPassword, user.password);
+                if (!correctPassword) {
+                    return res.status(401).json({ error: "Incorrect password." });
+                }
+            }
+            user.firstName = firstName;
+            user.lastName = lastName;
+            user.email = email;
+            user.age = age;
+            user.pic = pic;
+            user.password = newPassword;
+            await user.save();
+            res.json({ msg: "Profile updated successfully." });
+        } catch (error) {
+            res.status(500).json({ error: "Internal server error." });
+        }
+    },
     doctorStatus: async (req, res) => {
         try {
           const user = await User.findById(req.params.userId).populate("doctor");
