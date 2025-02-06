@@ -11,6 +11,7 @@ const initialState = {
   email: "",
   password: "",
   confpassword: "",
+  phonenumber: "",
   age: "",
   pic: "",
   isDoctor: false,
@@ -82,6 +83,7 @@ function Register() {
         email,
         password,
         age,
+        phonenumber,
         pic: file,
         isDoctor,
         license: isDoctor ? license : "",
@@ -145,6 +147,16 @@ function Register() {
               name="age"
               placeholder="Enter your age"
               value={formState.age}
+              onChange={inputChange}
+            />
+          </Form.Item>
+
+          <Form.Item label="Phone Number" required>
+            <Input
+              type="text"
+              name="phonenumber"
+              placeholder="Enter your phone number"
+              value={formState.phonenumber}
               onChange={inputChange}
             />
           </Form.Item>
