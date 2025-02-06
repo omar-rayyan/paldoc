@@ -23,9 +23,8 @@ const PalDocController = {
             const userToken = jwt.sign({ id: user._id }, process.env.SECRET_KEY);
 
             res
-                .cookie("usertoken", userToken, {
+                .cookie("usertoken", userToken, process.env.SECRET_KEY, {
                     httpOnly: true,
-                    sameSite: "Strict"
                 })
                 .json({ msg: "Login successful!", user: { id: user._id, email: user.email } });
         } catch (error) {
@@ -35,25 +34,67 @@ const PalDocController = {
 
     register: async (req, res) => {
         try {
-            const user = await User.create(req.body);
-
+            const { isDoctor, license, professionalSpecialty, ...userData } = req.body;
+    
+            // Create the user
+            const user = await User.create({
+                ...userData,
+                doctor: isDoctor
+                    ? {
+                        licenseNumber: license,
+                        professionalSpecialty: professionalSpecialty || "", // Add the professional specialty
+                    }
+                    : null,
+            });
+    
+            // Create JWT token
             const userToken = jwt.sign({ id: user._id }, process.env.SECRET_KEY);
-
+    
+            // Send response with token
             res
                 .cookie("usertoken", userToken, {
                     httpOnly: true,
-                    sameSite: "Strict"
                 })
                 .json({ msg: "Registration successful!", user: { id: user._id, email: user.email } });
         } catch (error) {
             res.status(400).json({ error: error.message });
         }
     },
+    
+    
 
     logout: (req, res) => {
         res.clearCookie("usertoken");
         res.json({ msg: "Logout successful." });
-    }
+    },
+
+    authenticate: async (req, res) => {
+        try {
+            const user = await User.findById(req.user.id);
+            if (!user) {
+                return res.status(404).json({ error: "User not found." });
+            }
+            res.json({ user: { id: user._id, email: user.email, isAdmin: user.isAdmin } });
+        } catch (error) {
+            res.status(500).json({ error: "Internal server error." });
+        }
+    },
+    doctorStatus: async (req, res) => {
+        try {
+          const user = await User.findById(req.params.userId).populate("doctor");
+          if (!user) {
+            return res.status(404).json({ message: "User not found." });
+          }
+      
+          const doctorStatus = {
+            isDoctor: user.doctor !== null,
+            approved: user.doctor ? user.doctor.approved : false,
+          };
+          res.json(doctorStatus);
+        } catch (error) {
+          res.status(500).json({ message: "Error fetching doctor status." });
+        }
+      },
 };
 
 export default PalDocController;

@@ -3,6 +3,7 @@ import express from 'express';
 import "./config/mongoose.config.js";
 import paldocRoutes from "./routes/paldoc.routes.js";
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 
 
 dotenv.config();
@@ -17,7 +18,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Routes
-app.use("/api/paldoc", paldocRoutes);
+paldocRoutes(app);
 
 // Start the server
 app.listen(port, () => console.log(`Server is running on port: ${port}`));
