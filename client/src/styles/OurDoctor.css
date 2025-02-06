@@ -1,0 +1,27 @@
+*{
+  margin: 0 0;
+  padding: 0 0;
+}
+.doctor-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+/* .doctor-card {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+} */
+
+.doctor-cards {
+  display: flex;
+  justify-content: flex-start;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.doctor-card {
+  flex: 0 0 auto;
+  width: 250px; /* You can adjust the width based on your design */
+}
