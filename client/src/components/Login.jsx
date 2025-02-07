@@ -11,6 +11,7 @@ const initialState = {
   loading: false,
 };
 
+// Reducer function for form state management
 const formReducer = (state, action) => {
   switch (action.type) {
     case "SET_FIELD":
@@ -96,12 +97,12 @@ function Login() {
             </Button>
           </Form.Item>
         </Form>
-        <p>
+        <p>    
           Don't have an account?{" "}
           <NavLink className="login-link" to="/register">
-            Sign up
+            REGISTER
           </NavLink>
-        </p>
+        </p> 
       </div>
     </section>
   );
