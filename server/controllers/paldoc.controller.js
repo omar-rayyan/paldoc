@@ -1,4 +1,4 @@
-import { User, Doctor, Appointment, Message } from "../models/paldoc.models.js";
+import { User, Appointment, Message } from "../models/paldoc.models.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import dotenv from "dotenv";
@@ -34,11 +34,12 @@ const PalDocController = {
 
     register: async (req, res) => {
         try {
-            const { isDoctor, license, professionalSpecialty, ...userData } = req.body;
+            const { isDoctor, license, professionalSpecialty, pic, ...userData } = req.body;
     
             // Create the user
             const user = await User.create({
                 ...userData,
+                pic: pic || "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg",
                 doctor: isDoctor
                     ? {
                         licenseNumber: license,
@@ -61,7 +62,11 @@ const PalDocController = {
         }
     },
     
-    
+    getDoctors: async (req, res) => {
+        User.find({ "doctor.approved": true })
+            .then(allDoctors => res.json(allDoctors))
+            .catch(err => res.status(500).json({ success: false, error: err.message }));
+    },
 
     logout: (req, res) => {
         res.clearCookie("usertoken");
@@ -96,7 +101,7 @@ const PalDocController = {
             if (!user) {
                 return res.status(404).json({ error: "User not found." });
             }
-            const { firstName, lastName, email, age, pic, oldPassword, newPassword } = req.body;
+            const { firstName, lastName, email, phonenumber, age, pic, oldPassword, newPassword } = req.body;
             if (oldPassword && newPassword) {
                 const correctPassword = await bcrypt.compare(oldPassword, user.password);
                 if (!correctPassword) {
@@ -109,6 +114,7 @@ const PalDocController = {
             user.firstName = firstName;
             user.lastName = lastName;
             user.email = email;
+            user.phonenumber = phonenumber;
             user.age = age;
             user.pic = pic;
             await user.save();

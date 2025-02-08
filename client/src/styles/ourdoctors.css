@@ -1,0 +1,58 @@
+*{
+  margin: 0 0;
+  padding: 0 0;
+}
+.doctor-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+/* .doctor-card {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+} */
+.doctor-card {
+  border-radius: 10px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  max-width: 300px;
+  margin: auto;
+}
+
+.doctor-avatar-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.doctor-avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.doctor-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.doctor-cards {
+  display: flex;
+  justify-content: flex-start;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.btn {
+  color: var(--white);
+  font-size: 0.8rem;
+  padding: 0.4rem 0.8rem;
+}
+.doctor-card {
+  flex: 0 0 auto;
+  width: 250px; /* You can adjust the width based on your design */
+}
