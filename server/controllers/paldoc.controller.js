@@ -68,6 +68,24 @@ const PalDocController = {
             .catch(err => res.status(500).json({ success: false, error: err.message }));
     },
 
+    deleteUser: async (req, res) => {
+        try {
+            const user = await User.findByIdAndDelete(req.params.id);
+            if (!user) {
+                return res.status(404).json({ error: "User not found." });
+            }
+            res.status(200).json({ msg: "User deleted successfully." });
+        } catch (error) {
+            res.status(500).json({ error: "Internal server error." });
+        }
+    },    
+
+    getPatients: async (req, res) => {
+        User.find({ "doctor": null })
+            .then(allPatients => res.json(allPatients))
+            .catch(err => res.status(500).json({ success: false, error: err.message }));
+    },
+
     logout: (req, res) => {
         res.clearCookie("usertoken");
         res.json({ msg: "Logout successful." });

@@ -12,6 +12,8 @@ export default (app) => {
 
     app.get("/api/paldoc/getdoctors", PalDocController.getDoctors);
 
+    app.get("/api/paldoc/admin/getpatients", authenticateAdmin, PalDocController.getPatients);
+
     app.get("/api/paldoc/getuser", authenticate, PalDocController.getUser);
 
     app.get("/api/paldoc/doctor-status/:userId", authenticate, PalDocController.doctorStatus);
@@ -19,4 +21,6 @@ export default (app) => {
     app.put("/api/paldoc/profile/update", authenticate, PalDocController.updateProfile);
   
     app.get("/api/paldoc/doctor-status/:userId", authenticate, PalDocController.doctorStatus);
+
+    app.delete("/api/paldoc/admin/deleteuser/:id", authenticateAdmin, PalDocController.deleteUser);
 };
