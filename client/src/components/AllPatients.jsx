@@ -33,7 +33,6 @@ const AllPatients = () => {
         message.error("Failed to delete: ", err);
       });
   };
-
   const columns = [
     {
       title: "First Name",
