@@ -1,0 +1,101 @@
+/* Ensure full-screen layout */
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* Navbar should stay on top */
+.navbar {
+  height: 60px;
+  background: #1890ff;
+  color: white;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+}
+
+/* Main chat layout */
+.chat-main {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Sidebar for users */
+.chat-sidebar {
+  width: 300px;
+  background: #f5f5f5;
+  padding: 16px;
+  overflow-y: auto;
+  border-right: 1px solid #ddd;
+}
+
+/* Chat window */
+.chat-content {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  overflow-y: auto;
+  position: relative; /* Ensures proper layout */
+}
+
+/* Chat messages */
+.chat-messages {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding-bottom: 60px; /* Space for input box */
+}
+
+/* Message styling */
+.chat-message {
+  margin-bottom: 10px;
+  padding: 10px;
+  border-radius: 8px;
+  max-width: 40%;
+  word-wrap: break-word;
+}
+
+/* User's messages */
+.mine {
+  align-self: flex-end;
+  background: #1890ff;
+  color: white;
+  margin-left: auto;
+}
+
+/* Other's messages */
+.theirs {
+  align-self: flex-start;
+  background: #eee;
+  color: black;
+  margin-right: auto;
+}
+
+/* Time for messages */
+.chat-time {
+  display: block;
+  font-size: 12px;
+  margin-top: 4px;
+  color: #666;
+}
+
+/* Chat input box - Stick to bottom */
+.chat-input {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 10px;
+  background: white;
+  border-top: 1px solid #ddd;
+  display: flex;
+  align-items: center;
+}
+
+/* Icons in the input bar */
+.chat-icons {
+  display: flex;
+  align-items: center;
+}

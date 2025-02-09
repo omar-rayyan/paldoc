@@ -7,6 +7,7 @@ import { Routes, Route } from 'react-router-dom';
 import OurDoctorsPage from "./components/OurDoctorsPage.jsx";
 import DoctorAppointments from "./components/AppointmentsDoctor.jsx";
 import PatientsPageAdmin from "./components/PatientsPageAdmin.jsx";
+import Chat from "./components/Chat";
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
         <Route path="/doctors" element={<OurDoctorsPage />} />
         <Route path="/admin/patients" element={<PatientsPageAdmin />} />
         <Route path="/appointments" element={<DoctorAppointments />} />
+        <Route path= "/messages" element={<Chat />} />
     </Routes>
   );
 }
