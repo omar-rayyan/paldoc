@@ -162,7 +162,28 @@ const PalDocController = {
   
       // Mark slot as booked
       doctor.doctor.availability[slotIndex].isBooked = true;
+
+      const doctorChatIndex = doctor.activeChats.findIndex(chat => chat.userId === patient._id);
+      if (doctorChatIndex === -1) {
+        doctor.activeChats.push({
+          userId: patient._id,
+          firstName: patient.firstName,
+          lastName: patient.lastName,
+          pic: patient.pic
+        });
+      }
       await doctor.save();
+
+      const patientChatIndex = patient.activeChats.findIndex(chat => chat.userId === doctor._id);
+      if (patientChatIndex === -1) {
+        patient.activeChats.push({
+          userId: doctor._id,
+          firstName: doctor.firstName,
+          lastName: doctor.lastName,
+          pic: doctor.pic
+        });
+      }
+      await patient.save();
   
       // Create the appointment with doctorName and patientName
       const appointment = new Appointment({
@@ -260,6 +281,57 @@ const PalDocController = {
     }
   },
 
+  getMessages: async (req, res) => {
+    try {
+      const { userId, doctorId } = req.params;
+      const messages = await Message.find({
+        $or: [
+          { userId, doctorId },
+          { userId: doctorId, doctorId: userId }
+        ]
+      }).sort({ createdAt: 1 });
+      res.json(messages);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch messages" });
+    }
+  },
+
+  getActiveChats: async (req, res) => {
+    try {
+      const user = await User.findById(req.user.id);
+
+      res.json(user.activeChats);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch active chats" });
+    }
+  },
+
+
+  sendMessage: async (req, res) => {
+    try {
+      const { doctorId, message } = req.body;
+      const userId = req.user.id;
+
+      const newMessage = await Message.create({
+        userId,
+        doctorId,
+        senderId: userId,
+        message
+      });
+
+      await User.findByIdAndUpdate(userId, {
+        $addToSet: { activeChats: doctorId }
+      });
+      await User.findByIdAndUpdate(doctorId, {
+        $addToSet: { activeChats: userId }
+      });
+
+      res.json(newMessage);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to send message" });
+    }
+  },
+
   updateProfile: async (req, res) => {
     try {
       const user = await User.findById(req.user.id);
@@ -285,6 +357,48 @@ const PalDocController = {
       await user.save();
       res.json({ msg: "Profile updated successfully." });
     } catch (error) {
+      res.status(500).json({ error: "Internal server error." });
+    }
+  },
+
+  startChat: async (req, res) => {
+    try {
+      const user = await User.findById(req.user.id);
+      const doctor = await User.findById(req.params.id);
+
+      if (!user) {
+        return res.status(404).json({ error: "User not found." });
+      }
+
+      if (!doctor) {
+        return res.status(404).json({ error: "Doctor not found." });
+      }
+
+      const chatIndex = user.activeChats.findIndex(chat => chat.userId === doctor._id);
+      if (chatIndex === -1) {
+        user.activeChats.push({
+          userId: doctor._id,
+          firstName: doctor.firstName,
+          lastName: doctor.lastName,
+          pic: doctor.pic
+        });
+      }
+      await user.save();
+
+      const doctorChatIndex = doctor.activeChats.findIndex(chat => chat.userId === user._id);
+      if (doctorChatIndex === -1) {
+        doctor.activeChats.push({
+          userId: user._id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          pic: user.pic
+        });
+      }
+      await doctor.save();
+      
+      res.json({ msg: "Chat initiated successfully." });
+    } catch (error) {
+      console.log(error);
       res.status(500).json({ error: "Internal server error." });
     }
   },

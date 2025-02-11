@@ -4,6 +4,7 @@ import FooterMin from "./FooterMin";
 import Navbar from "./Navbar";
 import axios from "axios";
 import "../styles/ourdoctors.css";
+import { Navigate, useNavigate } from "react-router-dom";
 
 const { Option } = Select;
 
@@ -17,6 +18,7 @@ const OurDoctorsPage = () => {
   const [doctorAvailability, setDoctorAvailability] = useState([]);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [selectedSlotTime, setSelectedSlotTime] = useState(null);
+  const navigate = useNavigate();
 
   const getDayName = (dayIndex) => {
     const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -71,6 +73,19 @@ const OurDoctorsPage = () => {
       .finally(() => setLoading(false));
       setSelectedSlot(null);
       setSelectedSlotTime(null);
+  };
+
+  const handleMessage = (doctorId) => {
+    axios
+      .post(`http://localhost:8000/api/paldoc/startchat/${doctorId}`, {}, { withCredentials: true })
+      .then(() => {
+        notification.success({ message: "Chat initiated!" });
+        navigate("/messages");
+      })
+      .catch((error) => {
+        console.error("Error initiating chat:", error);
+        notification.error({ message: "Error initiating chat!" });
+      });
   };
 
   const confirmAppointment = () => {
@@ -137,7 +152,7 @@ const OurDoctorsPage = () => {
                     <Button type="primary" block onClick={() => handleBookAppointment(user)}>
                       Book Appointment
                     </Button>
-                    <Button type="default" block>
+                    <Button type="default" block onClick={() => handleMessage(user._id)}>
                       Message
                     </Button>
                   </div>

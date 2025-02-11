@@ -1,95 +1,217 @@
-import React, { useState } from "react";
-import { Layout, Input, List, Avatar, Typography } from "antd";
-import { SendOutlined, FolderOutlined } from "@ant-design/icons"; // Import FolderOutlined
+// src/components/Chat.jsx
+import React, { useState, useEffect, useRef } from "react";
+import { Layout, Input, List, Avatar, Typography, notification } from "antd";
+import { SendOutlined, FolderOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
+import axios from "axios";
+import { io } from "socket.io-client";
 import "../styles/Chat.css";
-import Footer from "./Footer";
+import FooterMin from "./FooterMin";
 import Navbar from "./Navbar";
 
-const { Sider, Content } = Layout;
-const { Text } = Typography;
-
-const Chat = () => {
-  const [messages, setMessages] = useState([
-    { id: 1, sender: "Mario Gomez", text: "How Are you", time: "15:41", mine: false },
-    { id: 2, sender: "Me", text: "sure m8", time: "15:45", mine: true },
-    { id: 3, sender: "Mario Gomez", text: "okay it's fine", time: "15:41", mine: false },
-    { id: 4, sender: "Me", text: "Thanks", time: "15:45", mine: true },
-  ]);
-  
+lastMessage  const [user, setUser] = useState(null);
+  const [activeChats, setActiveChats] = useState([]);
+  const [currentChat, setCurrentChat] = useState(null);
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
+  const socketRef = useRef();
 
-  const sendMessage = () => {
-    if (input.trim()) {
-      setMessages([...messages, { id: messages.length + 1, sender: "Me", text: input, time: dayjs().format("HH:mm"), mine: true }]);
-      setInput("");
+  // Fetch the logged-in user info on mount
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await axios.get("http://localhost:8000/api/paldoc/getuser", {
+          withCredentials: true,
+        });
+        setUser(response.data);
+      } catch (error) {
+        notification.error({ message: "Failed to load user data" });
+      }
+    };
+    fetchUserData();
+  }, []);
+
+  useEffect(() => {
+    axios.get("http://localhost:8000/api/paldoc/chats", { withCredentials: true })
+      .then((response) => {
+        setActiveChats(response.data);
+      })
+      .catch((err) => console.error("Failed to fetch active chats", err));
+  }, []);
+
+  useEffect(() => {
+    if (!user) return; // Wait until user data is fetched
+
+    const socket = io("http://localhost:8000", {
+      withCredentials: true,
+    });
+    socketRef.current = socket;
+
+    // Register this socket with the logged-in user's ID
+    socket.emit("register", user.id);
+
+    // Listen for incoming messages; use currentChatRef for the latest selected chat
+    socket.on("receive_message", (data) => {
+      if (currentChatRef.current && data.senderId === currentChatRef.current._id) {
+        setMessages((prevMessages) => [...prevMessages, data]);
+      }
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [user]);
+
+  // Whenever a chat is selected (and the user is loaded), fetch the conversation history
+  useEffect(() => {
+    if (currentChat && user) {
+      axios
+        .get(`/api/paldoc/messages/${user.id}/${currentChat._id}`, { withCredentials: true })
+        .then((response) => {
+          setMessages(response.data);
+        })
+        .catch((err) => console.error("Failed to fetch messages", err));
+    }
+  }, [currentChat, user]);
+
+  // Handler for sending a message
+  const handleSendMessage = () => {
+    if (input.trim() && currentChat && user) {
+      const newMessage = {
+        senderId: user.id,
+        userId: user.id,
+        doctorId: currentChat._id,
+        message: input,
+        time: dayjs().format("HH:mm"),
+      };
+
+      // Save the message via the REST API
+      axios
+        .post(
+          "/api/paldoc/messages/send",
+          {
+            doctorId: currentChat._id,
+            message: input,
+          },
+          { withCredentials: true }
+        )
+        .then(() => {
+          // Append the new message to the conversation
+          setMessages((prevMessages) => [...prevMessages, newMessage]);
+
+          // Emit the message via Socket.io for real-time delivery
+          if (socketRef.current) {
+            socketRef.current.emit("send_message", {
+              ...newMessage,
+              recipientId: currentChat._id,
+            });
+          }
+          setInput("");
+        })
+        .catch((err) => console.error("Failed to send message", err));
     }
   };
 
-  const handleFolderClick = () => {
-    // Handle folder icon click (e.g., open file picker or folder)
-    console.log("Folder icon clicked");
-  };
-
   return (
-    <div className="chat-container">
-      <Navbar />
-      
-      <div className="chat-main">
-        {/* Sidebar */}
-        <Sider className="chat-sidebar">
-          <List
-            itemLayout="horizontal"
-            dataSource={[
-              { name: "Andre Silva", lastMessage: "How are you?" },
-              { name: "Marco Reus", lastMessage: "Sehr gut, Danke" },
-              { name: "Antoine Griezmann", lastMessage: "Let's 1v1 in FIFA20!" },
-              { name: "Iqbal Taufiq", lastMessage: "" },
-            ]}
-            renderItem={(item) => (
-              <List.Item className="chat-item">
-                <List.Item.Meta
-                  avatar={<Avatar>{item.name.charAt(0)}</Avatar>}
-                  title={<Text strong>{item.name}</Text>}
-                  description={<Text type="secondary">{item.lastMessage}</Text>}
-                />
-              </List.Item>
-            )}
-          />
-        </Sider>
+    <>
+      {/* Navbar in Header */}
+        <Navbar />
 
-        {/* Chat Window */}
-        <Content className="chat-content">
-          {/* Chat messages container */}
-          <div className="chat-messages">
-            {messages.map((msg) => (
-              <div key={msg.id} className={`chat-message ${msg.mine ? "mine" : "theirs"}`}>
-                <Text>{msg.text}</Text>
-                <Text type="secondary" className="chat-time">{msg.time}</Text>
-              </div>
-            ))}
-          </div>
-
-          {/* Input Box with Icons */}
-          <div className="chat-input">
-            <Input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Type something..."
-              onPressEnter={sendMessage}
-              suffix={
-                <div className="chat-icons">
-                  <FolderOutlined onClick={handleFolderClick} style={{ cursor: "pointer", marginRight: 8 }} />
-                  <SendOutlined onClick={sendMessage} style={{ cursor: "pointer" }} />
-                </div>
-              }
+      {/* Main Content Area */}
+      <Content style={{ padding: "24px", background: "#f0f2f5" }}>
+        <Layout style={{ background: "#fff", minHeight: "80vh" }}>
+          {/* Chat Sidebar */}
+          <Sider
+            width={250}
+            className="chat-sidebar"
+            style={{ background: "#fff", borderRight: "1px solid #f0f0f0" }}
+          >
+            <List
+              itemLayout="horizontal"
+              dataSource={activeChats}
+              renderItem={(chat) => (
+                <List.Item
+                  onClick={() => setCurrentChat(chat)}
+                  className={currentChat && currentChat._id === chat._id ? "active-chat" : ""}
+                  style={{ cursor: "pointer", padding: "12px" }}
+                >
+                  <List.Item.Meta
+                    avatar={<Avatar src={chat.pic} />}
+                    title={`${chat.firstName} ${chat.lastName}`}
+                    description={chat.lastMessage || "No messages yet"}
+                  />
+                </List.Item>
+              )}
             />
-          </div>
-        </Content>
-      </div>
+          </Sider>
 
-      <Footer /> 
-    </div>
+          {/* Chat Window */}
+          <Content className="chat-window" style={{ padding: "16px", overflowY: "auto" }}>
+            {currentChat ? (
+              <>
+                <div
+                  className="chat-header"
+                  style={{ marginBottom: "16px", display: "flex", alignItems: "center" }}
+                >
+                  <Avatar src={currentChat.pic} />
+                  <Text strong style={{ marginLeft: "8px" }}>
+                    {`${currentChat.firstName} ${currentChat.lastName}`}
+                  </Text>
+                </div>
+                <div
+                  className="chat-messages"
+                  style={{
+                    marginBottom: "16px",
+                    height: "calc(100vh - 300px)",
+                    overflowY: "auto",
+                  }}
+                >
+                  {messages.map((msg, index) => (
+                    <div
+                      key={index}
+                      className={`chat-message ${msg.senderId === user.id ? "mine" : "theirs"}`}
+                      style={{ marginBottom: "8px" }}
+                    >
+                      <div className="message-content">{msg.message}</div>
+                      <div className="message-time">{msg.time}</div>
+                    </div>
+                  ))}
+                </div>
+                <div className="chat-input-container">
+                  <Input
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    placeholder="Type a message..."
+                    onPressEnter={handleSendMessage}
+                    addonBefore={
+                      <FolderOutlined
+                        onClick={() => console.log("Folder icon clicked")}
+                        style={{ cursor: "pointer" }}
+                      />
+                    }
+                    addonAfter={
+                      <SendOutlined
+                        onClick={handleSendMessage}
+                        style={{ cursor: "pointer" }}
+                      />
+                    }
+                  />
+                </div>
+              </>
+            ) : (
+              <div
+                className="no-chat-selected"
+                style={{ textAlign: "center", marginTop: "50px" }}
+              >
+                <Text type="secondary">Select a chat to start messaging</Text>
+              </div>
+            )}
+          </Content>
+        </Layout>
+      </Content>
+
+      <FooterMin />
+      </>
   );
 };
 
