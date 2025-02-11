@@ -20,6 +20,28 @@
   max-width: 300px;
   margin: auto;
 }
+/* Ensure the select element and modal have a clean layout */
+.ant-modal-body {
+  padding: 20px;  /* Add padding to the modal body for spacing */
+}
+
+.ant-select {
+  font-size: 16px;  /* Slightly larger font for better readability */
+}
+
+.mb-4 {
+  margin-bottom: 16px;  /* Add some space between the select and the button */
+}
+
+.ant-btn-primary {
+  background-color: #1890ff;  /* Ensure the primary button stands out */
+  border-color: #1890ff;
+}
+
+.ant-btn-primary:disabled {
+  background-color: #d9d9d9;  /* Make disabled buttons less prominent */
+  border-color: #d9d9d9;
+}
 
 .doctor-avatar-container {
   display: flex;

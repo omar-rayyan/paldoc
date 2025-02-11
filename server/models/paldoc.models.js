@@ -131,18 +131,22 @@ const AppointmentSchema = new mongoose.Schema({
         ref: 'User',
         required: true,
     },
-    date: {
-        type: Date,
+    dayOfWeek: {
+        type: String,
         required: [true, 'Appointment date is required.'],
     },
-    time: {
-        type: String, // Keeping time as a string (e.g., "14:30" or "02:30 PM")
-        required: [true, 'Appointment time is required.'],
+    startTime: {
+        type: String,
+        required: [true, 'Appointment start time is required.'],
+    },
+    endTime: {
+        type: String,
+        required: [true, 'Appointment end time is required.'],
     },
     status: {
         type: String,
-        enum: ['Pending', 'Approved'],
-        default: 'Pending',
+        enum: ['Booked', 'Finished'],
+        default: 'Booked',
     }
 }, { timestamps: true });
 

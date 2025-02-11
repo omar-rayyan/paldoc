@@ -73,10 +73,17 @@ const AllPatients = () => {
       title: "Action",
       key: "action",
       render: (_, record) => (
-        <Button type="primary" danger icon={<DeleteOutlined />} onClick={() => handleDelete(record._id)} />
+        !record.isAdmin && (
+          <Button 
+            type="primary" 
+            danger 
+            icon={<DeleteOutlined />} 
+            onClick={() => handleDelete(record._id)} 
+          />
+        )
       ),
     }
-  ];
+  ];  
 
   return (
     <div>
