@@ -178,7 +178,8 @@ const PalDocController = {
       if (!user) {
         return res.status(404).json({ error: "User not found." });
       }
-      res.json({ user: { id: user._id, email: user.email, isAdmin: user.isAdmin } });
+      let isDoctor = user.doctor !== null;
+      res.json({ user: { id: user._id, email: user.email, isAdmin: user.isAdmin, isDoctor: isDoctor } });
     } catch (error) {
       res.status(500).json({ error: "Internal server error." });
     }
@@ -237,11 +238,64 @@ const PalDocController = {
     }
   },
 
+  markAppointmentAsFinished: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const appointment = await Appointment.findById(id);
+  
+      if (!appointment) {
+        return res.status(404).json({ error: "Appointment not found." });
+      }
+  
+      appointment.status = "Finished";
+      await appointment.save();
+
+      const doctor = await User.findById(appointment.doctorId);
+  
+      if (!doctor || !doctor.doctor) {
+        return res.status(404).json({ error: "Doctor not found" });
+      }
+
+      const slotIndex = doctor.doctor.availability.findIndex(
+        (slot) =>
+          slot.startTime == appointment.startTime &&
+          slot.endTime == appointment.endTime &&
+          slot.dayOfWeek == appointment.dayOfWeek &&
+          slot.isBooked
+      );
+  
+      if (slotIndex === -1) {
+        return res.status(400).json({ error: "Failed to update doctor's availability slots: Slot not available" });
+      }
+  
+      // Mark slot as free
+      doctor.doctor.availability[slotIndex].isBooked = false;
+      await doctor.save();
+  
+      res.json({ message: "Appointment marked as finished." });
+    } catch (error) {
+      res.status(500).json({ error: "Server error" });
+    }
+  },  
+
   getPatientAppointments: async (req, res) => {
     try {
       const userId = req.user.id;
   
       const appointments = await Appointment.find({ userId }).sort({ dayOfWeek: 1, startTime: 1 });
+  
+      res.json(appointments);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Failed to fetch appointments" });
+    }
+  },
+
+  getDoctorAppointments: async (req, res) => {
+    try {
+      const doctorId = req.user.id;
+  
+      const appointments = await Appointment.find({ doctorId }).sort({ dayOfWeek: 1, startTime: 1 });
   
       res.json(appointments);
     } catch (error) {

@@ -10,6 +10,7 @@ const Navbar = () => {
   const [iconActive, setIconActive] = useState(false);
   const [token, setToken] = useState(null);
   const [user, setUser] = useState(null);
+  const [isDoctor, setIsDoctor] = useState(false);
   const navigate = useNavigate();
 
   // Check if there's a token in cookies
@@ -29,6 +30,9 @@ const Navbar = () => {
             })
             .then((response) => {
                 setUser(response.data.user);
+                if(response.data.user.doctor){
+                  setIsDoctor(true);
+                };
             })
             .catch((error) => {
                 console.log(error);
@@ -66,12 +70,12 @@ const Navbar = () => {
           </li>
           {token && (
             <>
-              {user?.doctor && (
+              {user?.isDoctor && (
                 <li>
                   <NavLink to={"/doctor/appointments"}>Appointments</NavLink>
                 </li>
               )}
-              {!user?.doctor && (
+              {!user?.isDoctor && (
                 <li>
                   <NavLink to={"/patient/appointments"}>Appointments</NavLink>
                 </li>
