@@ -12,7 +12,7 @@ import {
   Radio,
 } from "antd";
 import "../styles/editProfile.css";
-
+import UpdateAvailability from "./UpdateAvailability";
 const { TabPane } = Tabs;
 const { Option } = Select;
 
@@ -66,6 +66,7 @@ function EditProfile() {
     initialPersonalState
   );
   const [profilePic, setProfilePic] = useState("");
+  const [isDoctor, setIsDoctor] = useState(false);
 
   // Health history state
   const [healthState, setHealthState] = useState(initialHealthState);
@@ -83,6 +84,7 @@ function EditProfile() {
           type: "SET_PERSONAL_DATA",
           payload: response.data,
         });
+        setIsDoctor(response.data.doctor !== null);
         setProfilePic(response.data.pic);
       } catch (error) {
         notification.error({ message: "Failed to load profile data" });
@@ -433,6 +435,10 @@ function EditProfile() {
               </Form.Item>
             </Form>
           </TabPane>
+          {isDoctor && (
+          <TabPane tab="Availabilities" key="3">
+            <UpdateAvailability/>
+          </TabPane>)}
         </Tabs>
       </div>
     </section>
