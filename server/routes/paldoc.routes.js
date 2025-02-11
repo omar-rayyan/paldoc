@@ -42,7 +42,9 @@ export default (app) => {
 
   app.get("/api/paldoc/getuser", authenticate, PalDocController.getUser);
 
-  app.get("/api/paldoc/health-history", authenticate, PalDocController.getHealthHistory);
+  app.get("/api/paldoc/healthhistory", authenticate, PalDocController.getHealthHistory);
+
+  app.get("/api/paldoc/healthhistory/:id", authenticate, PalDocController.getPatientHealthHistory);
 
   app.post("/api/paldoc/patient/health-history", authenticate, PalDocController.saveHealthHistory);
 
