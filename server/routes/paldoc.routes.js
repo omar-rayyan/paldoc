@@ -28,6 +28,8 @@ export default (app) => {
 
   app.get("/api/paldoc/admin/getpatients", authenticateAdmin, PalDocController.getPatients);
 
+  app.get("/api/paldoc/admin/getappointments", authenticateAdmin, PalDocController.getAppointments);
+
   app.get("/api/paldoc/admin/getdoctors", authenticateAdmin, PalDocController.getDoctors);
 
   app.get("/api/paldoc/patient/getappointments", authenticate, PalDocController.getPatientAppointments);
