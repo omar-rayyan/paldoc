@@ -18,7 +18,7 @@ const OurDoctorsPage = () => {
   const [modalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
-    axios.get("http://localhost:8000/api/paldoc/getdoctors")
+    axios.get("http://localhost:8000/api/paldoc/getapproveddoctors")
       .then(response => {
         const approvedDoctors = response.data;
         setDoctors(approvedDoctors);

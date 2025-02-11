@@ -53,7 +53,7 @@ const PalDocController = {
     }
   },
   
-  getDoctors: async (req, res) => {
+  getApprovedDoctors: async (req, res) => {
     User.find({ "doctor.approved": true })
       .then(allDoctors => res.json(allDoctors))
       .catch(err => res.status(500).json({ success: false, error: err.message }));
@@ -75,6 +75,28 @@ const PalDocController = {
     User.find({ doctor: null })
       .then(allPatients => res.json(allPatients))
       .catch(err => res.status(500).json({ success: false, error: err.message }));
+  },
+
+  getDoctors: async (req, res) => {
+    User.find({ doctor: { $ne: null } })
+      .then(allDoctors => res.json(allDoctors))
+      .catch(err => res.status(500).json({ success: false, error: err.message }));
+  },
+
+  approveDoctor: async (req, res) => {
+    try {
+      const user = await User.findById(req.params.id);
+      if (!user || !user.doctor) {
+        return res.status(404).json({ message: "Doctor not found" });
+      }
+  
+      user.doctor.approved = true;
+      await user.save();
+  
+      res.status(200).json({ message: "Doctor approved successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Server error", error: error.message });
+    }
   },
 
   logout: (req, res) => {

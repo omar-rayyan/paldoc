@@ -22,9 +22,11 @@ export default (app) => {
 
   app.get("/api/paldoc/authenticate", authenticate, PalDocController.authenticate);
 
-  app.get("/api/paldoc/getdoctors", PalDocController.getDoctors);
+  app.get("/api/paldoc/getapproveddoctors", PalDocController.getApprovedDoctors);
 
   app.get("/api/paldoc/admin/getpatients", authenticateAdmin, PalDocController.getPatients);
+
+  app.get("/api/paldoc/admin/getdoctors", authenticateAdmin, PalDocController.getDoctors);
 
   app.get("/api/paldoc/getuser", authenticate, PalDocController.getUser);
 
@@ -33,6 +35,8 @@ export default (app) => {
   app.post("/api/paldoc/patient/health-history", authenticate, PalDocController.saveHealthHistory);
 
   app.post("/api/paldoc/doctor/availability", authenticate, PalDocController.setAvailability);
+
+  app.post("/api/paldoc/admin/approvedoctor/:id", authenticateAdmin, PalDocController.approveDoctor);
 
   app.post("/api/paldoc/doctor/verification", authenticate, PalDocController.verifyDoctor);
 
