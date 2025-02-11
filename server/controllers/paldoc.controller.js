@@ -58,6 +58,24 @@ const PalDocController = {
       .catch(err => res.status(500).json({ success: false, error: err.message }));
   },
 
+  updateAvailabilities: async (req, res) => {
+    try {
+      const { availability } = req.body;
+      const doctor = await User.findById(req.user.id);
+  
+      if (!doctor || !doctor.doctor) {
+        return res.status(404).json({ error: "Doctor not found" });
+      }
+  
+      doctor.doctor.availability = availability;
+      await doctor.save();
+  
+      res.status(200).json({ message: "Availability updated successfully", availability });
+    } catch (error) {
+      res.status(500).json({ error: "Server error", details: error.message });
+    }
+  },
+  
   deleteUser: async (req, res) => {
     try {
       const user = await User.findByIdAndDelete(req.params.id);
@@ -85,6 +103,21 @@ const PalDocController = {
   getDoctorAvailability: async (req, res) => {
     try {
       const doctor = await User.findById(req.params.doctorId);
+  
+      if (!doctor || !doctor.doctor) {
+        return res.status(404).json({ error: "Doctor not found" });
+      }
+  
+      const availableSlots = doctor.doctor.availability.filter(slot => !slot.isBooked);
+      res.json(availableSlots);
+    } catch (error) {
+      res.status(500).json({ error: "Server error" });
+    }
+  },
+
+  getPersonalAvailabilities: async (req, res) => {
+    try {
+      const doctor = await User.findById(req.user.id);
   
       if (!doctor || !doctor.doctor) {
         return res.status(404).json({ error: "Doctor not found" });
