@@ -1,5 +1,5 @@
 import React from "react";
-import Footer from "../components/Footer";
+import FooterMin from "../components/FooterMin";
 import Register from "../components/Register";
 import Navbar from "../components/Navbar";
 
@@ -8,7 +8,7 @@ const RegisterPage = () => {
     <>
       <Navbar />
       <Register/>
-      <Footer />
+      <FooterMin />
     </>
   );
 };

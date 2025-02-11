@@ -53,11 +53,11 @@ const Footer = () => {
         <div className="footer-bottom">
           Copyrights reserved - {" "}
           <a
-            href="https://axsos.academy"
+            href="https://www.google.com"
             target="_blank"
             rel="noreferrer"
           >
-            Axsos Academy
+            PalDoc
           </a>{" "}
           © {new Date().getFullYear()}
         </div>

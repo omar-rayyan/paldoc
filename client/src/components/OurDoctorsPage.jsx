@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Modal, Button, Select, Card, DatePicker, TimePicker, Spin } from "antd";
-import Footer from "./Footer";
+import FooterMin from "./FooterMin";
 import Navbar from "./Navbar";
 import axios from "axios";
 import "../styles/ourdoctors.css";
@@ -115,7 +115,7 @@ const OurDoctorsPage = () => {
           )}
         </Modal>
       </div>
-      <Footer />
+      <FooterMin />
     </div>
   );
 }

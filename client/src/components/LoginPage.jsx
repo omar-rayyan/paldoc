@@ -1,15 +1,17 @@
 import React from "react";
-import Footer from "../components/Footer";
+import FooterMin from "../components/FooterMin";
 import Login from "../components/Login";
 import Navbar from "../components/Navbar";
 
 const LoginPage = () => {
   return (
-    <>
+    <div className="page-container">
       <Navbar />
-      <Login/>
-      <Footer />
-    </>
+      <div className="content">
+        <Login />
+      </div>
+      <FooterMin />
+    </div>
   );
 };
 

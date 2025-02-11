@@ -14,6 +14,16 @@ footer {
   padding: 2rem 0;
 }
 
+.page-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.content {
+  flex-grow: 1;
+}
+
 .footer h3 {
   color: var(--light-blue);
   margin-bottom: 1rem;

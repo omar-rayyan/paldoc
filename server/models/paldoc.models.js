@@ -3,18 +3,30 @@ import bcrypt from 'bcryptjs';
 
 const DoctorSchema = new mongoose.Schema({
     approved: {
-        type: Boolean,
-        default: false,
+      type: Boolean,
+      default: false,
     },
     licenseNumber: {
-        type: String,
-        required: [true, 'License number is required.'],
+      type: String,
     },
     professionalSpecialty: {
-        type: String,
-        required: [true, 'Professional specialty is required.'],
-    }
-}, { _id: false });
+      type: String,
+      required: [true, 'Professional specialty is required.'],
+    },
+    verificationDocuments: [{
+      type: String,  // URLs to uploaded documents
+      required: true
+    }],
+    availability: [{
+      dayOfWeek: Number,  // 0-6 for Sunday-Saturday
+      startTime: String,  // "HH:mm" format
+      endTime: String,
+      isBooked: {
+        type: Boolean,
+        default: false
+      }
+    }]
+  }, { _id: false });
 
 const UserSchema = new mongoose.Schema({
     firstName: {
@@ -134,9 +146,37 @@ const AppointmentSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
+const HealthHistorySchema = new mongoose.Schema({
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true
+    },
+    medicalConditions: [String],
+    allergies: [String],
+    currentMedications: [String],
+    surgicalHistory: [String],
+    familyHistory: {
+      type: Map,
+      of: Boolean,
+      default: {}
+    },
+    smokingStatus: String,
+    alcoholConsumption: String,
+    exerciseFrequency: String,
+    dietaryRestrictions: [String],
+    bloodType: String,
+    emergencyContact: {
+      name: String,
+      relationship: String,
+      phone: String
+    }
+  });
+
 const User = mongoose.model('User', UserSchema);
 const Doctor = mongoose.model('Doctor', DoctorSchema);
 const Appointment = mongoose.model('Appointment', AppointmentSchema);
 const Message = mongoose.model('Message', MessageSchema);
+const HealthHistory = mongoose.model('HealthHistory', HealthHistorySchema);
 
-export { User, Doctor, Appointment, Message };
+export { User, Doctor, Appointment, Message, HealthHistory };
