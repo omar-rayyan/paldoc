@@ -44,6 +44,14 @@ export default (app) => {
 
   app.get("/api/paldoc/healthhistory", authenticate, PalDocController.getHealthHistory);
 
+  app.get("/api/paldoc/messages/:userId/:contactId", authenticate, PalDocController.getMessages);
+
+  app.post("/api/paldoc/startchat/:id", authenticate, PalDocController.startChat);
+
+  app.post("/api/paldoc/messages/send", authenticate, PalDocController.sendMessage);
+
+  app.get("/api/paldoc/chats", authenticate, PalDocController.getActiveChats);
+
   app.get("/api/paldoc/healthhistory/:id", authenticate, PalDocController.getPatientHealthHistory);
 
   app.post("/api/paldoc/patient/health-history", authenticate, PalDocController.saveHealthHistory);

@@ -1,6 +1,26 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 
+const ChatSchema = new mongoose.Schema({
+    userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true,
+    },
+    firstName: {
+      type: String,
+    },
+    lastName: {
+      type: String,
+    },
+    lastMessage: {
+        type: String,
+    },
+    pic: {
+      type: String,
+    },
+  }, { timestamps: true });
+
 const DoctorSchema = new mongoose.Schema({
     approved: {
       type: Boolean,
@@ -75,9 +95,9 @@ const UserSchema = new mongoose.Schema({
     },
     activeChats: [
         {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'User',
-        }
+            type: ChatSchema,
+            default: null,
+        },
     ],
 }, { timestamps: true });
 
