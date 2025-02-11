@@ -131,6 +131,12 @@ const AppointmentSchema = new mongoose.Schema({
         ref: 'User',
         required: true,
     },
+    patientName: {
+        type: String,
+    },
+    doctorName: {
+        type: String,
+    },
     dayOfWeek: {
         type: String,
         required: [true, 'Appointment date is required.'],
