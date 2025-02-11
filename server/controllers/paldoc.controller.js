@@ -76,6 +76,12 @@ const PalDocController = {
       .catch(err => res.status(500).json({ success: false, error: err.message }));
   },
 
+  getAppointments: async (req, res) => {
+    Appointment.find()
+      .then(allAppointments => res.json(allAppointments))
+      .catch(err => res.status(500).json({ success: false, error: err.message }));
+  },
+
   getDoctorAvailability: async (req, res) => {
     try {
       const doctor = await User.findById(req.params.doctorId);

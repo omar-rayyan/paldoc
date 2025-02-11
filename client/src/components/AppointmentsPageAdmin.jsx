@@ -6,13 +6,13 @@ import {
   CalendarOutlined,
   HomeOutlined,
 } from "@ant-design/icons";
-import AllPatients from "../components/AllPatients";
+import AllAppointments from "../components/AllAppointments";
 import { Link } from "react-router-dom";
 
 const { Sider, Content } = Layout;
 const { Title } = Typography;
 
-const PatientsPageAdmin = () => {
+const AppointmentsPageAdmin = () => {
   return (
     <>
       <Layout style={{ minHeight: "100vh" }}>
@@ -23,7 +23,7 @@ const PatientsPageAdmin = () => {
             </Title>
           </div>
           <Divider style={{ background: "rgba(255, 255, 255, 0.2)" }} />
-          <Menu theme="dark" mode="inline" defaultSelectedKeys={["1"]}>
+          <Menu theme="dark" mode="inline" defaultSelectedKeys={["3"]}>
             <Menu.Item key="1" icon={<UserOutlined />}>
               <Link to="/admin/patients">Patients</Link>
             </Menu.Item>
@@ -41,7 +41,7 @@ const PatientsPageAdmin = () => {
         </Sider>
         <Layout>
           <Content style={{ padding: "20px" }}>
-            <AllPatients />
+            <AllAppointments />
           </Content>
         </Layout>
       </Layout>
@@ -49,4 +49,4 @@ const PatientsPageAdmin = () => {
   );
 };
 
-export default PatientsPageAdmin;
+export default AppointmentsPageAdmin;

@@ -8,6 +8,7 @@ import OurDoctorsPage from "./components/OurDoctorsPage.jsx";
 import DoctorAppointments from "./components/DoctorAppointments.jsx";
 import PatientAppointments from "./components/PatientAppointments.jsx";
 import PatientsPageAdmin from "./components/PatientsPageAdmin.jsx";
+import AppointmentsPageAdmin from "./components/AppointmentsPageAdmin.jsx";
 import DoctorsPageAdmin from "./components/DoctorsPageAdmin.jsx";
 import Chat from "./components/Chat";
 import AvailabilitySetupPage from "./components/AvailabilitySetupPage.jsx";
@@ -26,6 +27,7 @@ function App() {
         <Route path="/doctors" element={<OurDoctorsPage />} />
         <Route path="/admin/patients" element={<PatientsPageAdmin />} />
         <Route path="/admin/doctors" element={<DoctorsPageAdmin />} />
+        <Route path="/admin/appointments" element={<AppointmentsPageAdmin />} />
         <Route path="/doctor/appointments" element={<DoctorAppointments />} />
         <Route path="/patient/appointments" element={<PatientAppointments />} />
         <Route path= "/messages" element={<Chat />} />
