@@ -100,7 +100,7 @@ function Login() {
         <p>    
           Don't have an account?{" "}
           <NavLink className="login-link" to="/register">
-            REGISTER
+            Register
           </NavLink>
         </p> 
       </div>

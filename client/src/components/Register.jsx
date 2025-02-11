@@ -15,7 +15,6 @@ const initialState = {
   age: "",
   pic: "",
   isDoctor: false,
-  license: "",
   loading: false,
   professionalSpecialty: "",
 };
@@ -66,7 +65,7 @@ function Register() {
 
   const formSubmit = async (values) => {
     try {
-      const { firstName, lastName, email, password, confpassword, age, isDoctor, license } = formState;
+      const { firstName, lastName, email, password, phonenumber, confpassword, age, isDoctor } = formState;
 
       if (!firstName || !lastName || !email || !password || !confpassword || !age) {
         notification.error({ message: "All fields are required" });
@@ -86,14 +85,17 @@ function Register() {
         phonenumber,
         pic: file,
         isDoctor,
-        license: isDoctor ? license : "",
         professionalSpecialty: isDoctor ? formState.professionalSpecialty : "",
       };
 
       dispatch({ type: "SET_LOADING", value: true });
       const response = await axios.post("http://localhost:8000/api/paldoc/register", userPayload, { withCredentials: true });
-      notification.success({ message: "Registration successful!" });
-      navigate("/login");
+      notification.success({ message: "Registration Initiated!" });
+      if (formState.isDoctor) {
+        navigate("/doctor-verification");
+      } else {
+        navigate("/patient-questionnaire");
+      }
     } catch (error) {
       console.error(error);
       notification.error({ message: "Unable to register user" });
@@ -105,7 +107,7 @@ function Register() {
   return (
     <section className="register-section flex-center">
       <div className="register-container flex-center">
-        <h2 className="form-heading">Sign Up</h2>
+        <h2 className="form-heading">Register</h2>
         <Form
           onFinish={formSubmit}
           className="register-form"
@@ -161,15 +163,6 @@ function Register() {
             />
           </Form.Item>
 
-          <Form.Item label="Profile Picture">
-            <Input
-              type="file"
-              onChange={(e) => handleFileUpload(e.target.files[0])}
-              name="profile-pic"
-              className="form-input"
-            />
-          </Form.Item>
-
           <Form.Item label="Password" required>
             <Input.Password
               name="password"
@@ -201,15 +194,6 @@ function Register() {
 
           {formState.isDoctor && (
             <>
-              <Form.Item label="License Number" required>
-                <Input
-                  type="text"
-                  name="license"
-                  placeholder="Enter your license number"
-                  value={formState.license}
-                  onChange={inputChange}
-                />
-              </Form.Item>
               <Form.Item label="Professional Specialty" required>
                 <select
                   name="professionalSpecialty"
@@ -264,7 +248,7 @@ function Register() {
               className="form-btn"
               disabled={formState.loading}
             >
-              {formState.loading ? <Spin /> : "Sign Up"}
+              {formState.loading ? <Spin /> : "Register"}
             </Button>
           </Form.Item>
         </Form>

@@ -1,5 +1,5 @@
 import React from "react";
-import Footer from "../components/Footer";
+import FooterMin from "../components/FooterMin";
 import EditProfile from "../components/EditProfile";
 import Navbar from "../components/Navbar";
 
@@ -8,7 +8,7 @@ const ProfilePage = () => {
     <>
       <Navbar />
       <EditProfile/>
-      <Footer />
+      <FooterMin />
     </>
   );
 };
