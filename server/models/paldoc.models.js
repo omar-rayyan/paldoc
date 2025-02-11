@@ -166,15 +166,8 @@ const HealthHistorySchema = new mongoose.Schema({
     allergies: [String],
     currentMedications: [String],
     surgicalHistory: [String],
-    familyHistory: {
-      type: Map,
-      of: Boolean,
-      default: {}
-    },
     smokingStatus: String,
     alcoholConsumption: String,
-    exerciseFrequency: String,
-    dietaryRestrictions: [String],
     bloodType: String,
     emergencyContact: {
       name: String,

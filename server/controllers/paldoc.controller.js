@@ -246,7 +246,19 @@ const PalDocController = {
     } catch (error) {
       res.status(500).json({ error: "Internal server error." });
     }
-  },  
+  },
+
+  getPatientHealthHistory: async (req, res) => {
+    try {
+      const healthHistory = await HealthHistory.findOne({ userId: req.params.id });
+      if (!healthHistory) {
+        return res.status(404).json({ error: "Health history not found." });
+      }
+      res.json(healthHistory);
+    } catch (error) {
+      res.status(500).json({ error: "Internal server error." });
+    }
+  },
 
   updateProfile: async (req, res) => {
     try {
