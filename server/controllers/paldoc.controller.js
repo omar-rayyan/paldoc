@@ -1,4 +1,3 @@
-// paldoc.controller.js
 import { User, Appointment, Message, HealthHistory } from "../models/paldoc.models.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
@@ -76,6 +75,52 @@ const PalDocController = {
       .then(allPatients => res.json(allPatients))
       .catch(err => res.status(500).json({ success: false, error: err.message }));
   },
+
+  getDoctorAvailability: async (req, res) => {
+    try {
+      const doctor = await User.findById(req.params.doctorId);
+  
+      if (!doctor || !doctor.doctor) {
+        return res.status(404).json({ error: "Doctor not found" });
+      }
+  
+      const availableSlots = doctor.doctor.availability.filter(slot => !slot.isBooked);
+      res.json(availableSlots);
+    } catch (error) {
+      res.status(500).json({ error: "Server error" });
+    }
+  },
+
+  bookAppointment: async (req, res) => {
+    try {
+      const { doctorId, dayOfWeek, startTime, endTime} = req.body;
+      const userId = req.user.id;
+  
+      const doctor = await User.findById(doctorId);
+      if (!doctor || !doctor.doctor) {
+        return res.status(404).json({ error: "Doctor not found" });
+      }
+  
+      // Ensure the slot is available
+      const slotIndex = doctor.doctor.availability.findIndex(slot => slot.startTime === startTime && slot.endTime === endTime && slot.dayOfWeek === dayOfWeek && !slot.isBooked);
+      if (slotIndex === -1) {
+        return res.status(400).json({ error: "Slot not available" });
+      }
+  
+      // Mark slot as booked
+      doctor.doctor.availability[slotIndex].isBooked = true;
+      await doctor.save();
+  
+      // Create the appointment
+      const appointment = new Appointment({ userId, doctorId, dayOfWeek, startTime, endTime, status: 'Booked' });
+      await appointment.save();
+  
+      res.json({ message: "Appointment booked successfully", appointment });
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({ error: "Server error" });
+    }
+  },  
 
   getDoctors: async (req, res) => {
     User.find({ doctor: { $ne: null } })
