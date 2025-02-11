@@ -93,16 +93,30 @@ const PalDocController = {
 
   bookAppointment: async (req, res) => {
     try {
-      const { doctorId, dayOfWeek, startTime, endTime} = req.body;
+      const { doctorId, dayOfWeek, startTime, endTime } = req.body;
       const userId = req.user.id;
   
+      // Fetch the doctor and patient details
       const doctor = await User.findById(doctorId);
+      const patient = await User.findById(userId); // Fetch the patient's details using the userId
+  
       if (!doctor || !doctor.doctor) {
         return res.status(404).json({ error: "Doctor not found" });
       }
+      
+      if (!patient) {
+        return res.status(404).json({ error: "Patient not found" });
+      }
   
       // Ensure the slot is available
-      const slotIndex = doctor.doctor.availability.findIndex(slot => slot.startTime === startTime && slot.endTime === endTime && slot.dayOfWeek === dayOfWeek && !slot.isBooked);
+      const slotIndex = doctor.doctor.availability.findIndex(
+        (slot) =>
+          slot.startTime === startTime &&
+          slot.endTime === endTime &&
+          slot.dayOfWeek === dayOfWeek &&
+          !slot.isBooked
+      );
+  
       if (slotIndex === -1) {
         return res.status(400).json({ error: "Slot not available" });
       }
@@ -111,8 +125,17 @@ const PalDocController = {
       doctor.doctor.availability[slotIndex].isBooked = true;
       await doctor.save();
   
-      // Create the appointment
-      const appointment = new Appointment({ userId, doctorId, dayOfWeek, startTime, endTime, status: 'Booked' });
+      // Create the appointment with doctorName and patientName
+      const appointment = new Appointment({
+        userId,
+        doctorId,
+        doctorName: toString(doctor.firstName, doctor.lastName),
+        patientName: toString(patient.firstName, patient.lastName),
+        dayOfWeek,
+        startTime,
+        endTime,
+        status: "Booked",
+      });
       await appointment.save();
   
       res.json({ message: "Appointment booked successfully", appointment });
@@ -120,7 +143,7 @@ const PalDocController = {
       console.log(error);
       res.status(500).json({ error: "Server error" });
     }
-  },  
+  },   
 
   getDoctors: async (req, res) => {
     User.find({ doctor: { $ne: null } })
@@ -214,6 +237,19 @@ const PalDocController = {
     }
   },
 
+  getPatientAppointments: async (req, res) => {
+    try {
+      const userId = req.user.id;
+  
+      const appointments = await Appointment.find({ userId }).sort({ dayOfWeek: 1, startTime: 1 });
+  
+      res.json(appointments);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Failed to fetch appointments" });
+    }
+  },
+
   doctorStatus: async (req, res) => {
     try {
       const user = await User.findById(req.params.userId).populate("doctor");
@@ -231,7 +267,6 @@ const PalDocController = {
     }
   },
 
-  // --- Updated Controller Methods (using req.user.id) ---
   verifyDoctor: async (req, res) => {
     try {
       const { licenseNumber, documents } = req.body;

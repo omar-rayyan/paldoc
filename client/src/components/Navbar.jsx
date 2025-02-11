@@ -66,9 +66,16 @@ const Navbar = () => {
           </li>
           {token && (
             <>
-              <li>
-                <NavLink to={"/appointments"}>Appointments</NavLink>
-              </li>
+              {user?.doctor && (
+                <li>
+                  <NavLink to={"/doctor/appointments"}>Appointments</NavLink>
+                </li>
+              )}
+              {!user?.doctor && (
+                <li>
+                  <NavLink to={"/patient/appointments"}>Appointments</NavLink>
+                </li>
+              )}
               <li>
                 <NavLink to={"/messages"}>Messages</NavLink>
               </li>
