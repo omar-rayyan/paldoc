@@ -115,11 +115,11 @@ function EditProfile() {
   return (
     <section className="register-section flex-center">
       <div className="register-container flex-center">
-        <h2 className="form-heading">Edit Profile</h2>
+        <h2 className="form-heading">  Edit Profile </h2>
         <Form onFinish={formSubmit} className="register-form">
           <Form.Item label="First Name" required>
             <Input name="firstName" value={formState.firstName} onChange={inputChange} />
-          </Form.Item>
+         </Form.Item>
 
           <Form.Item label="Last Name" required>
             <Input name="lastName" value={formState.lastName} onChange={inputChange} />
