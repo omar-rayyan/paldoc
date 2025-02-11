@@ -1,106 +1,117 @@
-import React, { useState } from "react";
-import { Table, Typography, Card, Button, Space, message, DatePicker } from "antd";
-import dayjs from "dayjs";
-import Footer from "./Footer";
+import React, { useState, useEffect } from "react";
+import { Table, Typography, Card, message, Layout } from "antd";
+import FooterMin from "./FooterMin";
 import Navbar from "./Navbar";
-
+import axios from "axios";
 const { Title } = Typography;
+const { Content } = Layout;
 
 export default function DoctorAppointments() {
-  const [pendingAppointments, setPendingAppointments] = useState([
-    { key: 1, patient: "Ali", date: "2023-02-14", time: "20:13", bookingDate: "2025-02-5", bookingTime: "13:42:56", status: "Pending" },
-    { key: 2, patient: "Ahmad", date: "2023-02-17", time: "21:30", bookingDate: "2025-02-13", bookingTime: "13:52:56", status: "Pending" },
-  ]);
+  const [appointments, setAppointments] = useState([]);
 
-  const [approvedAppointments, setApprovedAppointments] = useState([]);
-  const [rescheduledAppointments, setRescheduledAppointments] = useState([
-    { key: 3, patient: "Sara", date: "2025-02-07", time: "15:45", bookingDate: "2025-02-07", bookingTime: "10:00:00", status: "Rescheduled" },
-    { key: 4, patient: "Michael", date: "2025-02-07", time: "16:30", bookingDate: "2025-02-07", bookingTime: "11:30:00", status: "Rescheduled" },
-    { key: 5, patient: "David", date: "2025-02-10", time: "17:00", bookingDate: "2025-02-07", bookingTime: "12:00:00", status: "Rescheduled" },
-  ]);
-
-  const [selectedDate, setSelectedDate] = useState(dayjs().format("YYYY-MM-DD"));
-
-  // Handle Approve
-  const handleApprove = (appointment) => {
-    setApprovedAppointments([...approvedAppointments, { ...appointment, status: "Approved" }]);
-    setPendingAppointments(pendingAppointments.filter((item) => item.key !== appointment.key));
-    message.success(`${appointment.patient}'s appointment approved!`);
+  const getDayName = (dayIndex) => {
+    const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    return days[dayIndex] || "Invalid Day";
   };
 
-  // Handle Reject
-  const handleReject = (appointment) => {
-    setPendingAppointments(pendingAppointments.filter((item) => item.key !== appointment.key));
-    message.error(`${appointment.patient}'s appointment rejected!`);
+  useEffect(() => {
+    fetchAppointments();
+  }, []);
+
+  // Fetch appointments from API
+  const fetchAppointments = async () => {
+    axios
+      .get("http://localhost:8000/api/paldoc/doctor/getappointments", { withCredentials: true })
+      .then((response) => {
+        setAppointments(response.data);
+        console.log(response.data);
+      })
+      .catch((error) => {
+        message.error("An error occurred while fetching appointments.");
+      });
   };
 
-  // Debugging logs
-  console.log("Selected Date:", selectedDate);
-  console.log("Rescheduled Appointments:", rescheduledAppointments);
+  const markAsFinished = async (appointmentId) => {
+    try {
+      await axios.put(`http://localhost:8000/api/paldoc/doctor/appointments/${appointmentId}/finish`, {}, { withCredentials: true });
+      message.success("Appointment marked as finished!");
+      fetchAppointments(); // Refresh the table
+    } catch (error) {
+      message.error("Failed to update appointment status.");
+    }
+  };
 
-  // Filter Rescheduled Appointments by Selected Date
-  const filteredRescheduledAppointments = rescheduledAppointments.filter((appointment) => {
-    console.log(`Checking: ${appointment.bookingDate} === ${selectedDate}`);
-    return dayjs(appointment.bookingDate).format("YYYY-MM-DD") === dayjs(selectedDate).format("YYYY-MM-DD");
-  });
+  // Filter appointments by status
+  const upcomingAppointments = appointments.filter(appointment => appointment.status === "Pending" || appointment.status === "Upcoming");
+  const pastAppointments = appointments.filter(appointment => appointment.status === "Finished");
 
-  // Table Columns
+  // Format columns
   const columns = [
-    { title: "S.No", dataIndex: "key", key: "key" },
-    { title: "Patient", dataIndex: "patient", key: "patient" },
-    { title: "Appointment Date", dataIndex: "date", key: "date" },
-    { title: "Appointment Time", dataIndex: "time", key: "time" },
-    { title: "Booking Date", dataIndex: "bookingDate", key: "bookingDate" },
-    { title: "Booking Time", dataIndex: "bookingTime", key: "bookingTime" },
-    { title: "Status", dataIndex: "status", key: "status" },
-  ];
-
-  // Pending Appointments Columns (with Action Buttons)
-  const pendingColumns = [
-    ...columns,
+    { title: "Patient", dataIndex: "patientName", key: "patientName" },
+    {
+      title: "Day of Week",
+      dataIndex: "dayOfWeek",
+      key: "dayOfWeek",
+      render: (dayIndex) => getDayName(dayIndex),
+    },
+    { title: "Start Time", dataIndex: "startTime", key: "startTime" },
+    { title: "End Time", dataIndex: "endTime", key: "endTime" },
     {
       title: "Action",
       key: "action",
-      render: (_, record) => (
-        <Space>
-          <Button type="primary" onClick={() => handleApprove(record)}>Approve</Button>
-          <Button danger onClick={() => handleReject(record)}>Reject</Button>
-        </Space>
+      render: (text, record) => (
+        record.status != "Finished" && (
+        <button
+          onClick={() => markAsFinished(record._id)}
+          style={{
+            backgroundColor: "#1890ff",
+            color: "white",
+            border: "none",
+            padding: "5px 10px",
+            cursor: "pointer",
+            borderRadius: "5px",
+          }}
+        >
+          Mark As Finished
+        </button>)
       ),
     },
   ];
 
   return (
-    <div style={{ padding: 20 }}>
+    <>
       <Navbar />
-      <Title level={2} className="text-center">Doctor's Appointments</Title>
+      <Content style={{ padding: "20px", flex: 1 }}>
+        <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
+          <Title level={2} className="text-center" style={{ marginBottom: "30px" }}>
+            Appointments
+          </Title>
 
-      {/* Pending Appointments */}
-      <Card title="Pending Appointments" bordered={false} style={{ marginBottom: 20 }}>
-        <Table columns={pendingColumns} dataSource={pendingAppointments} pagination={false} />
-      </Card>
+          <Card
+            title="Upcoming Appointments"
+            bordered={false}
+            style={{
+              marginBottom: 20,
+              borderRadius: 10,
+              boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+            }}
+          >
+            <Table columns={columns} dataSource={upcomingAppointments} pagination={false} />
+          </Card>
 
-      {/* Rescheduled Appointments with Date Filter */}
-      <Card title="Rescheduled Appointments" bordered={false} style={{ marginBottom: 20 }}>
-        <Space style={{ marginBottom: 10 }}>
-          <span>Select Date:</span>
-          <DatePicker 
-            onChange={(date, dateString) => {
-              console.log("Selected Date Changed:", dateString);
-              setSelectedDate(dateString);
-            }} 
-            defaultValue={dayjs()} 
-            format="YYYY-MM-DD" 
-          />
-        </Space>
-        <Table columns={columns} dataSource={filteredRescheduledAppointments} pagination={false} />
-      </Card>
-
-      {/* Approved Appointments */}
-      <Card title="Approved Appointments" bordered={false}>
-        <Table columns={columns} dataSource={approvedAppointments} pagination={false} />
-      </Card>
-      <Footer />  
-    </div>
+          <Card
+            title="Past Appointments"
+            bordered={false}
+            style={{
+              borderRadius: 10,
+              boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+            }}
+          >
+            <Table columns={columns} dataSource={pastAppointments} pagination={false} />
+          </Card>
+        </div>
+      </Content>
+      <FooterMin style={{ marginTop: "auto" }} />
+    </>
   );
 }
