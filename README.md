@@ -24,5 +24,5 @@ PAlDOC is a web-based platform that connects users with doctors for online consu
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/yourusername/PAlDOC.git
+git clone https://github.com/yourusername/PAlDOC.git](https://github.com/omar-rayyan/paldoc.git
 cd PAlDOC
