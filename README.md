@@ -1,5 +1,6 @@
 # PalDoc - Online Doctor Consultation System
-![White and Green Square Medical Logo(2)](https://github.com/user-attachments/assets/76915900-c83e-46c1-b65e-262691ddd505)
+
+![White and Green Square Medical Logo (50 x 50 mm)](https://github.com/user-attachments/assets/97b0efb9-ce66-4a1f-b667-f49dcf55047f)
 
 
 PalDoc is a web-based platform that connects users with doctors for online consultations. Users can book appointments, chat with doctors in real time, and receive medical advice. Administrators verify doctors' credentials before granting them access.
