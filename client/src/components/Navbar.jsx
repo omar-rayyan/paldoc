@@ -60,7 +60,7 @@ const Navbar = () => {
       <nav className={iconActive ? "nav-active" : ""}>
         <h2 className="nav-logo">
           <NavLink to={"/"}>
-          <img src="./src/assets/Logo.png" alt="PalDoc Logo" srcset="" className="logo-image"/>
+          <img src="./assets/logo.png" alt="PalDoc Logo" srcset="" className="logo-image"/>
           </NavLink>
         </h2>
         <ul className="nav-links">
