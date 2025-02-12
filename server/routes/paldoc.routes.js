@@ -66,6 +66,8 @@ export default (app) => {
 
   app.post("/api/paldoc/appointments/book", authenticate, PalDocController.bookAppointment);
 
+  app.post("/api/paldoc/ai-chat-message", authenticate, PalDocController.aiChatMessage);
+
   app.get("/api/paldoc/doctor-status/:userId", authenticate, PalDocController.doctorStatus);
 
   app.put("/api/paldoc/profile/update", authenticate, PalDocController.updateProfile);

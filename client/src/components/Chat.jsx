@@ -1,6 +1,5 @@
-// src/components/Chat.jsx
 import React, { useState, useEffect, useRef } from "react";
-import { Layout, Input, List, Typography, notification } from "antd";
+import { Layout, Input, List, Typography, notification, Spin } from "antd";
 import { SendOutlined, FolderOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
 import axios from "axios";
@@ -22,6 +21,7 @@ const Chat = () => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [searchText, setSearchText] = useState("");
+  const [isLoading, setIsLoading] = useState(false); // New state for loading AI response
   const socketRef = useRef();
   const currentChatRef = useRef(currentChat);
   const messagesEndRef = useRef(null);
@@ -111,6 +111,13 @@ const Chat = () => {
     };
   }, [user]);
 
+  const truncateMessage = (message, length = 30) => {
+    if (message.length > length) {
+      return message.substring(0, length) + '...';
+    }
+    return message;
+  };
+
   // When a chat is selected, fetch its conversation history
   useEffect(() => {
     if (currentChat && user) {
@@ -131,35 +138,37 @@ const Chat = () => {
     if (input.trim() && currentChat && user) {
       const chatPartner = getChatPartner(currentChat);
       // Check whether the selected chat is with the AI assistant
-      if (chatPartner._id === AI_ASSISTANT_ID) {
-        // Handle AI chat message
+      if (Object.keys(chatPartner).length === 0) {
+        setMessages(prev => [
+          ...prev,
+          { senderId: user._id, message: input, time: dayjs().format("HH:mm") }
+        ]);
+        setActiveChats(prevChats =>
+          prevChats.map(chat =>
+            chat._id === currentChat._id
+              ? { ...chat, lastMessage: input }
+              : chat
+          )
+        );
+        setInput("");
+        setIsLoading(true); // Start loading state when AI message is sent
         axios.post(
           "http://localhost:8000/api/paldoc/ai-chat-message",
           { message: input, chatId: currentChat._id },
           { withCredentials: true }
         )
         .then((response) => {
-          // Add the user's message
-          setMessages(prev => [
-            ...prev,
-            { senderId: user._id, message: input, time: dayjs().format("HH:mm") }
-          ]);
           // Add the AI's response
           setMessages(prev => [
             ...prev,
             { senderId: AI_ASSISTANT_ID, message: response.data.aiResponse, time: dayjs().format("HH:mm") }
           ]);
-          // Update the last message preview in the active chats list
-          setActiveChats(prevChats =>
-            prevChats.map(chat =>
-              chat._id === currentChat._id
-                ? { ...chat, lastMessage: response.data.aiResponse }
-                : chat
-            )
-          );
-          setInput("");
+          setIsLoading(false); // Stop loading when response is received
         })
-        .catch(err => console.error("Failed to send AI message", err));
+        .catch(err => {
+          setIsLoading(false);
+          console.error("Failed to send AI message", err);
+        });
       } else {
         // Regular chat message sending (your existing code)
         const newMessage = {
@@ -242,7 +251,7 @@ const Chat = () => {
                     <List.Item.Meta
                       avatar={<OptimizedAvatar src={partner.pic} size={50} />}
                       title={partner.firstName || partner.lastName ? `${partner.firstName || ""} ${partner.lastName || ""}`.trim() : "AI Health Assistant"}
-                      description={chat.lastMessage || "No messages yet"}
+                      description={truncateMessage(chat.lastMessage || "No messages yet")}
                     />
                   </List.Item>
                 );
@@ -292,38 +301,35 @@ const Chat = () => {
                       <div className="message-time">{msg.time}</div>
                     </div>
                   ))}
+                  {isLoading && (
+                    <Spin
+                      indicator={<SendOutlined spin />}
+                      style={{
+                        marginTop: "16px",
+                        textAlign: "center",
+                        display: "block",
+                      }}
+                    />
+                  )}
                   <div ref={messagesEndRef} />
                 </div>
-                <div className="chat-input-container">
+                <div className="chat-input-container" style={{ padding: "10px" }}>
                   <Input
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    placeholder="Type a message..."
                     onPressEnter={handleSendMessage}
-                    addonBefore={
-                      <FolderOutlined
-                        onClick={() => console.log("Folder icon clicked")}
-                        style={{ cursor: "pointer" }}
-                      />
-                    }
-                    addonAfter={
+                    placeholder="Type a message"
+                    suffix={
                       <SendOutlined
+                        style={{ color: "#1890ff", fontSize: "18px" }}
                         onClick={handleSendMessage}
-                        style={{ cursor: "pointer" }}
                       />
                     }
                   />
                 </div>
               </>
             ) : (
-              <div
-                className="no-chat-selected"
-                style={{ textAlign: "center", marginTop: "50px" }}
-              >
-                <Text type="secondary">
-                  Select a chat to start messaging
-                </Text>
-              </div>
+              <div>Select a chat to start messaging</div>
             )}
           </Content>
         </Layout>

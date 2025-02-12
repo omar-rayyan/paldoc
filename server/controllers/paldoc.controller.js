@@ -7,7 +7,12 @@ import fs from "fs";
 import axios from "axios";
 import dayjs from "dayjs";
 import path from "path";
+import { OpenAI } from "openai";
 const AI_ASSISTANT_ID = "64a123456789abcdef123456";
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 dotenv.config();
 
@@ -574,21 +579,30 @@ const PalDocController = {
         message,
         time: dayjs().format("HH:mm")
       });
+
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+            { role: "assistant", content: "You are a helpful health assistant. Provide professional answers, and in a simple way for patients who do not understand scientific expressions. Do not include text formatting, like bold or bullet points in your responses and keep them in single paragraphs." },
+            {
+                role: "user",
+                content: message,
+            },
+        ],
+        store: true,
+    });
+
       
-      const response = await axios.post(
-        "https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium",
-        { inputs: { text: message } },
-        { headers: { Authorization: `Bearer ${process.env.HUGGINGFACE_API_KEY}` } }
-      );
-      
-      const aiResponseText = response.data.generated_text || "I'm sorry, I couldn't process that.";
-      
+      const aiResponseText = (completion.choices[0].message.content) || "I'm sorry, I couldn't process that.";
+
       const aiMessage = await Message.create({
         senderId: AI_ASSISTANT_ID,
         chatId,
         message: aiResponseText,
         time: dayjs().format("HH:mm")
       });
+
+      await Chat.findByIdAndUpdate(chatId, { lastMessage: aiResponseText });
       
       res.json({ aiResponse: aiResponseText });
     } catch (error) {
