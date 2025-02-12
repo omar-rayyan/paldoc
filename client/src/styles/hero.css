@@ -56,3 +56,33 @@
     margin-top: 4rem;
   }
 }
+
+.hero-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.register-btn {
+  display: inline-block;
+  padding: 0.8rem 1.5rem;
+  background-color: var(--darker-blue);
+  color: var(--white);
+  border-radius: 5px;
+  text-decoration: none;
+  font-weight: 600;
+  align-self: flex-start;
+  transition: all 0.3s ease;
+}
+
+.register-btn:hover {
+  background-color: var(--light-blue);
+  transform: translateY(-2px);
+  color: var(--darker-blue);
+}
+
+@media screen and (max-width: 770px) {
+  .register-btn {
+    align-self: center;
+  }
+}

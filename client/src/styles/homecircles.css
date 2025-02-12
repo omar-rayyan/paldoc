@@ -1,28 +1,38 @@
 @import url(app.css);
 
+
+
 .circles {
+  display: flex;
   flex-direction: row;
-  margin-top: 10rem;
-  justify-content: space-evenly;
+  margin: 5rem auto;
+  justify-content: center;
   align-items: center;
+  gap: 3rem;
+  padding: 2rem;
 }
 
 .circle {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 0.5rem;
+  gap: 1rem;
   background-color: var(--white);
-  width: 250px;
-  height: 250px;
+  width: 200px;
+  height: 200px;
   border-radius: 50%;
   align-items: center;
-  box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.15);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.circle:hover {
+  transform: translateY(-5px);
 }
 
 .counter {
-  font-size: 3rem;
-  font-weight: 600;
+  font-size: 2.5rem;
+  font-weight: 700;
   color: var(--darker-blue);
 }
 
@@ -30,9 +40,28 @@
   font-size: 1.1rem;
   font-weight: 600;
   color: var(--light-text-color);
+  text-align: center;
 }
 
-@media screen and (max-width: 1000px) {
+@media screen and (max-width: 900px) {
+  .circles {
+    gap: 2rem;
+  }
+  .circle {
+    width: 180px;
+    height: 180px;
+  }
+  .counter {
+    font-size: 2.2rem;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .circles {
+    flex-direction: column;
+    gap: 2rem;
+    margin: 3rem auto;
+  }
   .circle {
     width: 200px;
     height: 200px;
@@ -42,50 +71,15 @@
   }
 }
 
-@media screen and (max-width: 770px) {
+@media screen and (max-width: 480px) {
   .circle {
-    width: 150px;
-    height: 150px;
+    width: 160px;
+    height: 160px;
   }
   .counter {
     font-size: 2rem;
   }
-
   .circle-name {
     font-size: 1rem;
-  }
-}
-
-@media screen and (max-width: 630px) {
-  .circle {
-    width: 130px;
-    height: 130px;
-  }
-  .counter {
-    font-size: 1.5rem;
-  }
-
-  .circle-name {
-    font-size: 0.9rem;
-  }
-}
-
-@media screen and (max-width: 550px) {
-  .circle {
-    width: 100px;
-    height: 100px;
-  }
-  .counter {
-    font-size: 1.4rem;
-  }
-}
-
-@media screen and (max-width: 460px) {
-  .circle {
-    width: 80px;
-    height: 80px;
-  }
-  .counter {
-    font-size: 1.3rem;
   }
 }
