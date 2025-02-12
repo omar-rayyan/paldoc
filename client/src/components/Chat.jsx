@@ -9,12 +9,25 @@ import "../styles/Chat.css";
 import FooterMin from "./FooterMin";
 import Navbar from "./Navbar";
 
-lastMessage  const [user, setUser] = useState(null);
+const { Content, Sider } = Layout;
+const { Text } = Typography;
+
+const Chat = () => {
+  const [user, setUser] = useState(null);
   const [activeChats, setActiveChats] = useState([]);
   const [currentChat, setCurrentChat] = useState(null);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const socketRef = useRef();
+
+  const messagesEndRef = useRef(null);
+
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
+
 
   // Fetch the logged-in user info on mount
   useEffect(() => {
@@ -66,21 +79,21 @@ lastMessage  const [user, setUser] = useState(null);
   useEffect(() => {
     if (currentChat && user) {
       axios
-        .get(`/api/paldoc/messages/${user.id}/${currentChat._id}`, { withCredentials: true })
+        .get(`http://localhost:8000/api/paldoc/messages/${currentChat._id}`, { withCredentials: true })
         .then((response) => {
           setMessages(response.data);
+          console.log(response.data);
         })
         .catch((err) => console.error("Failed to fetch messages", err));
     }
-  }, [currentChat, user]);
+  }, [currentChat]);
 
   // Handler for sending a message
   const handleSendMessage = () => {
     if (input.trim() && currentChat && user) {
       const newMessage = {
-        senderId: user.id,
-        userId: user.id,
-        doctorId: currentChat._id,
+        senderId: user._id,
+        chatId: currentChat._id,
         message: input,
         time: dayjs().format("HH:mm"),
       };
@@ -88,16 +101,21 @@ lastMessage  const [user, setUser] = useState(null);
       // Save the message via the REST API
       axios
         .post(
-          "/api/paldoc/messages/send",
+          "http://localhost:8000/api/paldoc/messages/send",
           {
-            doctorId: currentChat._id,
-            message: input,
+            msg: newMessage,
           },
           { withCredentials: true }
         )
         .then(() => {
           // Append the new message to the conversation
           setMessages((prevMessages) => [...prevMessages, newMessage]);
+
+          setActiveChats((prevChats) =>
+            prevChats.map((chat) =>
+              chat._id === currentChat._id ? { ...chat, lastMessage: newMessage.message } : chat
+            )
+          );
 
           // Emit the message via Socket.io for real-time delivery
           if (socketRef.current) {
@@ -169,13 +187,14 @@ lastMessage  const [user, setUser] = useState(null);
                   {messages.map((msg, index) => (
                     <div
                       key={index}
-                      className={`chat-message ${msg.senderId === user.id ? "mine" : "theirs"}`}
+                      className={`chat-message ${msg.senderId === user._id ? "mine" : "theirs"}`}
                       style={{ marginBottom: "8px" }}
                     >
                       <div className="message-content">{msg.message}</div>
                       <div className="message-time">{msg.time}</div>
                     </div>
                   ))}
+                  <div ref={messagesEndRef} />
                 </div>
                 <div className="chat-input-container">
                   <Input

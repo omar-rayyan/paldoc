@@ -283,15 +283,15 @@ const PalDocController = {
 
   getMessages: async (req, res) => {
     try {
-      const { userId, doctorId } = req.params;
-      const messages = await Message.find({
-        $or: [
-          { userId, doctorId },
-          { userId: doctorId, doctorId: userId }
-        ]
-      }).sort({ createdAt: 1 });
+      const { chatId } = req.params;
+      const userId = req.user.id;
+      const user = await User.findById(userId)
+      const chat = user.activeChats.find(chat => chat._id.toString() === chatId);
+      const messages = await Message.find(
+          { chatId: chat._id }).sort({ createdAt: 1 });
       res.json(messages);
     } catch (error) {
+      console.log(error);
       res.status(500).json({ error: "Failed to fetch messages" });
     }
   },
@@ -309,25 +309,26 @@ const PalDocController = {
 
   sendMessage: async (req, res) => {
     try {
-      const { doctorId, message } = req.body;
-      const userId = req.user.id;
+      const { msg } = req.body;
+      const {senderId, chatId, message, time} = msg;
+      const user = await User.findById(senderId);
+      const chatIndex = user.activeChats.findIndex(chat => chat._id.toString() === chatId);
+        if (chatIndex === -1) {
+            return res.status(404).json({ error: "Chat not found" });
+        }
 
+        user.activeChats[chatIndex].lastMessage = message;
+        await user.save();
       const newMessage = await Message.create({
-        userId,
-        doctorId,
-        senderId: userId,
-        message
-      });
-
-      await User.findByIdAndUpdate(userId, {
-        $addToSet: { activeChats: doctorId }
-      });
-      await User.findByIdAndUpdate(doctorId, {
-        $addToSet: { activeChats: userId }
+        senderId,
+        chatId,
+        message,
+        time
       });
 
       res.json(newMessage);
     } catch (error) {
+      console.log(error);
       res.status(500).json({ error: "Failed to send message" });
     }
   },
@@ -374,7 +375,7 @@ const PalDocController = {
         return res.status(404).json({ error: "Doctor not found." });
       }
 
-      const chatIndex = user.activeChats.findIndex(chat => chat.userId === doctor._id);
+      const chatIndex = user.activeChats.findIndex(chat => chat.userId.toString() === doctor._id.toString());
       if (chatIndex === -1) {
         user.activeChats.push({
           userId: doctor._id,
