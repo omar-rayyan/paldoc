@@ -187,7 +187,7 @@ const PalDocController = {
         dayOfWeek,
         startTime,
         endTime,
-        status: "Booked",
+        status: "Upcoming",
       });
       await appointment.save();
 

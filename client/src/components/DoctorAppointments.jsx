@@ -86,7 +86,7 @@ export default function DoctorAppointments() {
   };
 
   const upcomingAppointments = appointments.filter(
-    (appointment) => appointment.status === "Pending" || appointment.status === "Upcoming"
+    (appointment) => appointment.status != "Finished"
   );
   const pastAppointments = appointments.filter(
     (appointment) => appointment.status === "Finished"
