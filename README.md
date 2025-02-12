@@ -33,10 +33,27 @@ LinkedIn: [Ali Yahya](https://www.linkedin.com/in/ali-yahya999/)
 ---
 
 ## Technologies Used
-- **Backend**: Node.js, Express.js, MongoDB, Mongoose
-- **Frontend**: React
-- **Authentication**: JWT (JSON Web Tokens)
-- **Database**: MongoDB Cloud
+
+### Backend
+- **Node.js**
+- **Express.js**
+- **MongoDB**
+- **Mongoose**
+- **Socket.io**
+- **OpenAI**
+
+### Frontend
+- **React**
+- **Ant Design**
+- **Socket.io**
+- **Vite**
+
+### Authentication
+- **JWT (JSON Web Tokens)**
+- **bcrypt.js**
+
+### Database
+- **MongoDB Cloud**
 
 ---
 
