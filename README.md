@@ -9,6 +9,10 @@ Jalal Hemmo - Full Stack Developer
 GitHub: [@jalalman](https://github.com/jalalman)  
 LinkedIn: [Jalal Hemmo](https://www.linkedin.com/in/jalal-hemmo)
 
+Mohammed Abu-Mukh - Full Stack Developer  
+GitHub: [@MohammedAbuMukh](https://github.com/MohammedAbuMukh)  
+LinkedIn: [Mohammed Abu-Mukh](https://www.linkedin.com/in/mohammad-abumukh/)
+
 Omar Rayyan - Full Stack Developer  
 GitHub: [@omar-rayyan](https://github.com/omar-rayyan)  
 LinkedIn: [Omar Rayyan](https://www.linkedin.com/in/omar-r-rayyan/)
