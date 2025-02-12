@@ -1,25 +1,22 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 
-const ChatSchema = new mongoose.Schema({
-    userId: {
+const ChatSchema = new mongoose.Schema(
+  {
+    participants: [
+      {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true,
-    },
-    firstName: {
-      type: String,
-    },
-    lastName: {
-      type: String,
-    },
+      },
+    ],
     lastMessage: {
-        type: String,
-    },
-    pic: {
       type: String,
     },
-  }, { timestamps: true });
+  },
+  { timestamps: true }
+);
+
 
 const DoctorSchema = new mongoose.Schema({
     approved: {
@@ -93,12 +90,6 @@ const UserSchema = new mongoose.Schema({
         type: DoctorSchema,
         default: null,
     },
-    activeChats: [
-        {
-            type: ChatSchema,
-            default: null,
-        },
-    ],
 }, { timestamps: true });
 
 UserSchema.pre('save', async function (next) {
@@ -114,28 +105,29 @@ UserSchema.pre('save', async function (next) {
     next();
 });
 
-const MessageSchema = new mongoose.Schema({
-    senderId: {
+const MessageSchema = new mongoose.Schema(
+    {
+      senderId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true,
-    },
-    chatId: {
-        type: String,
+      },
+      chatId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Chat',
         required: true,
-    },
-    message: {
+      },
+      message: {
         type: String,
         required: [true, 'Message content is required.'],
-    },
-    lastMessage: {
-        type: String,
-    },
-    time: {
+      },
+      time: {
         type: String,
         required: true,
-    }
-}, { timestamps: true });
+      },
+    },
+    { timestamps: true }
+  );
 
 const AppointmentSchema = new mongoose.Schema({
     userId: {
@@ -198,5 +190,5 @@ const Doctor = mongoose.model('Doctor', DoctorSchema);
 const Appointment = mongoose.model('Appointment', AppointmentSchema);
 const Message = mongoose.model('Message', MessageSchema);
 const HealthHistory = mongoose.model('HealthHistory', HealthHistorySchema);
-
-export { User, Doctor, Appointment, Message, HealthHistory };
+const Chat = mongoose.model('Chat', ChatSchema);
+export { User, Doctor, Appointment, Message, HealthHistory, Chat };

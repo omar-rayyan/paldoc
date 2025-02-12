@@ -1,6 +1,6 @@
 // src/components/Chat.jsx
 import React, { useState, useEffect, useRef } from "react";
-import { Layout, Input, List, Avatar, Typography, notification } from "antd";
+import { Layout, Input, List, Typography, notification } from "antd";
 import { SendOutlined, FolderOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
 import axios from "axios";
@@ -8,9 +8,12 @@ import { io } from "socket.io-client";
 import "../styles/Chat.css";
 import FooterMin from "./FooterMin";
 import Navbar from "./Navbar";
+import OptimizedAvatar from "./OptimizedAvatar";  // <-- Import the new component
 
 const { Content, Sider } = Layout;
 const { Text } = Typography;
+const { Search } = Input;
+const AI_ASSISTANT_ID = "64a123456789abcdef123456";
 
 const Chat = () => {
   const [user, setUser] = useState(null);
@@ -18,24 +21,42 @@ const Chat = () => {
   const [currentChat, setCurrentChat] = useState(null);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
+  const [searchText, setSearchText] = useState("");
   const socketRef = useRef();
-
+  const currentChatRef = useRef(currentChat);
   const messagesEndRef = useRef(null);
 
+  // Always update currentChatRef when currentChat changes
+  useEffect(() => {
+    currentChatRef.current = currentChat;
+  }, [currentChat]);
+
+  // Scroll to the bottom of messages on update
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
 
+  // Helper to get the chat partner (the user who is not the logged-in user)
+  const getChatPartner = (chat) => {
+    if (!user || !chat || !Array.isArray(chat.participants)) return {};
+    return (
+      chat.participants.find((participant) => {
+        if (!participant || !participant._id || !user._id) return false;
+        return participant._id.toString() !== user._id.toString();
+      }) || {}
+    );
+  };  
 
-  // Fetch the logged-in user info on mount
+  // Fetch logged-in user info on mount
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const response = await axios.get("http://localhost:8000/api/paldoc/getuser", {
-          withCredentials: true,
-        });
+        const response = await axios.get(
+          "http://localhost:8000/api/paldoc/getuser",
+          { withCredentials: true }
+        );
         setUser(response.data);
       } catch (error) {
         notification.error({ message: "Failed to load user data" });
@@ -44,14 +65,19 @@ const Chat = () => {
     fetchUserData();
   }, []);
 
+  // Fetch active chats (the API returns Chat documents with populated participants)
   useEffect(() => {
-    axios.get("http://localhost:8000/api/paldoc/chats", { withCredentials: true })
+    axios
+      .get("http://localhost:8000/api/paldoc/chats", {
+        withCredentials: true,
+      })
       .then((response) => {
         setActiveChats(response.data);
       })
       .catch((err) => console.error("Failed to fetch active chats", err));
   }, []);
 
+  // Set up socket connection (using currentChatRef to check the current chat)
   useEffect(() => {
     if (!user) return; // Wait until user data is fetched
 
@@ -61,13 +87,23 @@ const Chat = () => {
     socketRef.current = socket;
 
     // Register this socket with the logged-in user's ID
-    socket.emit("register", user.id);
+    socket.emit("register", user._id.toString());
 
-    // Listen for incoming messages; use currentChatRef for the latest selected chat
+    // Listen for incoming messages
     socket.on("receive_message", (data) => {
-      if (currentChatRef.current && data.senderId === currentChatRef.current._id) {
+      if (
+        currentChatRef.current &&
+        data.chatId.toString() === currentChatRef.current._id.toString()
+      ) {
         setMessages((prevMessages) => [...prevMessages, data]);
       }
+      setActiveChats((prevChats) =>
+        prevChats.map((chat) =>
+          chat._id.toString() === data.chatId.toString()
+            ? { ...chat, lastMessage: data.message }
+            : chat
+        )
+      );
     });
 
     return () => {
@@ -75,67 +111,102 @@ const Chat = () => {
     };
   }, [user]);
 
-  // Whenever a chat is selected (and the user is loaded), fetch the conversation history
+  // When a chat is selected, fetch its conversation history
   useEffect(() => {
     if (currentChat && user) {
       axios
-        .get(`http://localhost:8000/api/paldoc/messages/${currentChat._id}`, { withCredentials: true })
+        .get(`http://localhost:8000/api/paldoc/messages/${currentChat._id}`, {
+          withCredentials: true,
+        })
         .then((response) => {
           setMessages(response.data);
-          console.log(response.data);
+          console.log("Messages:", response.data);
         })
         .catch((err) => console.error("Failed to fetch messages", err));
     }
-  }, [currentChat]);
+  }, [currentChat, user]);
 
-  // Handler for sending a message
+  // Handler for sending a message (updated to include recipientId)
   const handleSendMessage = () => {
     if (input.trim() && currentChat && user) {
-      const newMessage = {
-        senderId: user._id,
-        chatId: currentChat._id,
-        message: input,
-        time: dayjs().format("HH:mm"),
-      };
-
-      // Save the message via the REST API
-      axios
-        .post(
-          "http://localhost:8000/api/paldoc/messages/send",
-          {
-            msg: newMessage,
-          },
+      const chatPartner = getChatPartner(currentChat);
+      // Check whether the selected chat is with the AI assistant
+      if (chatPartner._id === AI_ASSISTANT_ID) {
+        // Handle AI chat message
+        axios.post(
+          "http://localhost:8000/api/paldoc/ai-chat-message",
+          { message: input, chatId: currentChat._id },
           { withCredentials: true }
         )
-        .then(() => {
-          // Append the new message to the conversation
-          setMessages((prevMessages) => [...prevMessages, newMessage]);
-
-          setActiveChats((prevChats) =>
-            prevChats.map((chat) =>
-              chat._id === currentChat._id ? { ...chat, lastMessage: newMessage.message } : chat
+        .then((response) => {
+          // Add the user's message
+          setMessages(prev => [
+            ...prev,
+            { senderId: user._id, message: input, time: dayjs().format("HH:mm") }
+          ]);
+          // Add the AI's response
+          setMessages(prev => [
+            ...prev,
+            { senderId: AI_ASSISTANT_ID, message: response.data.aiResponse, time: dayjs().format("HH:mm") }
+          ]);
+          // Update the last message preview in the active chats list
+          setActiveChats(prevChats =>
+            prevChats.map(chat =>
+              chat._id === currentChat._id
+                ? { ...chat, lastMessage: response.data.aiResponse }
+                : chat
             )
           );
-
-          // Emit the message via Socket.io for real-time delivery
-          if (socketRef.current) {
-            socketRef.current.emit("send_message", {
-              ...newMessage,
-              recipientId: currentChat._id,
-            });
-          }
           setInput("");
         })
-        .catch((err) => console.error("Failed to send message", err));
+        .catch(err => console.error("Failed to send AI message", err));
+      } else {
+        // Regular chat message sending (your existing code)
+        const newMessage = {
+          senderId: user._id,
+          chatId: currentChat._id,
+          message: input,
+          time: dayjs().format("HH:mm"),
+        };
+  
+        axios
+          .post(
+            "http://localhost:8000/api/paldoc/messages/send",
+            { msg: newMessage },
+            { withCredentials: true }
+          )
+          .then(() => {
+            setMessages(prevMessages => [...prevMessages, newMessage]);
+            setActiveChats(prevChats =>
+              prevChats.map(chat =>
+                chat._id === currentChat._id
+                  ? { ...chat, lastMessage: newMessage.message }
+                  : chat
+              )
+            );
+            if (socketRef.current) {
+              socketRef.current.emit("send_message", {
+                ...newMessage,
+                recipientId: chatPartner._id,
+              });
+            }
+            setInput("");
+          })
+          .catch(err => console.error("Failed to send message", err));
+      }
     }
   };
 
+  // Filter active chats by the chat partner's name using the search text
+  const filteredChats = activeChats.filter((chat) => {
+    const partner = getChatPartner(chat);
+    const fullName = `${partner.firstName || ""} ${partner.lastName || ""}`.trim();
+    return fullName.toLowerCase().includes(searchText.toLowerCase());
+  });
+
   return (
     <>
-      {/* Navbar in Header */}
-        <Navbar />
-
-      {/* Main Content Area */}
+      <Navbar />
       <Content style={{ padding: "24px", background: "#f0f2f5" }}>
         <Layout style={{ background: "#fff", minHeight: "80vh" }}>
           {/* Chat Sidebar */}
@@ -144,36 +215,61 @@ const Chat = () => {
             className="chat-sidebar"
             style={{ background: "#fff", borderRight: "1px solid #f0f0f0" }}
           >
+            <div style={{ padding: "12px" }}>
+              <Search
+                placeholder="Search chats"
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                allowClear
+                enterButton
+              />
+            </div>
             <List
               itemLayout="horizontal"
-              dataSource={activeChats}
-              renderItem={(chat) => (
-                <List.Item
-                  onClick={() => setCurrentChat(chat)}
-                  className={currentChat && currentChat._id === chat._id ? "active-chat" : ""}
-                  style={{ cursor: "pointer", padding: "12px" }}
-                >
-                  <List.Item.Meta
-                    avatar={<Avatar src={chat.pic} />}
-                    title={`${chat.firstName} ${chat.lastName}`}
-                    description={chat.lastMessage || "No messages yet"}
-                  />
-                </List.Item>
-              )}
+              dataSource={filteredChats}
+              renderItem={(chat) => {
+                const partner = getChatPartner(chat);
+                return (
+                  <List.Item
+                    onClick={() => setCurrentChat(chat)}
+                    className={
+                      currentChat && currentChat._id === chat._id
+                        ? "active-chat"
+                        : ""
+                    }
+                    style={{ cursor: "pointer", padding: "12px" }}
+                  >
+                    <List.Item.Meta
+                      avatar={<OptimizedAvatar src={partner.pic} size={50} />}
+                      title={partner.firstName || partner.lastName ? `${partner.firstName || ""} ${partner.lastName || ""}`.trim() : "AI Health Assistant"}
+                      description={chat.lastMessage || "No messages yet"}
+                    />
+                  </List.Item>
+                );
+              }}
             />
           </Sider>
-
           {/* Chat Window */}
-          <Content className="chat-window" style={{ padding: "16px", overflowY: "auto" }}>
+          <Content
+            className="chat-window"
+            style={{ padding: "16px", overflowY: "auto" }}
+          >
             {currentChat ? (
               <>
                 <div
                   className="chat-header"
-                  style={{ marginBottom: "16px", display: "flex", alignItems: "center" }}
+                  style={{
+                    marginBottom: "16px",
+                    display: "flex",
+                    alignItems: "center",
+                  }}
                 >
-                  <Avatar src={currentChat.pic} />
+                  <OptimizedAvatar
+                    src={getChatPartner(currentChat).pic}
+                    size={50}
+                  />
                   <Text strong style={{ marginLeft: "8px" }}>
-                    {`${currentChat.firstName} ${currentChat.lastName}`}
+                    {`${getChatPartner(currentChat).firstName || ""} ${getChatPartner(currentChat).lastName || ""}`.trim() || "PalDoc AI Health Assistant"}
                   </Text>
                 </div>
                 <div
@@ -187,7 +283,9 @@ const Chat = () => {
                   {messages.map((msg, index) => (
                     <div
                       key={index}
-                      className={`chat-message ${msg.senderId === user._id ? "mine" : "theirs"}`}
+                      className={`chat-message ${
+                        msg.senderId === user._id ? "mine" : "theirs"
+                      }`}
                       style={{ marginBottom: "8px" }}
                     >
                       <div className="message-content">{msg.message}</div>
@@ -222,15 +320,16 @@ const Chat = () => {
                 className="no-chat-selected"
                 style={{ textAlign: "center", marginTop: "50px" }}
               >
-                <Text type="secondary">Select a chat to start messaging</Text>
+                <Text type="secondary">
+                  Select a chat to start messaging
+                </Text>
               </div>
             )}
           </Content>
         </Layout>
       </Content>
-
       <FooterMin />
-      </>
+    </>
   );
 };
 

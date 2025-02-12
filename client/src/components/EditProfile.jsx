@@ -125,7 +125,7 @@ function EditProfile() {
       data.append("file", file);
       try {
         const response = await axios.post(
-          "http://localhost:8000/api/paldoc/upload",
+          "http://localhost:8000/api/paldoc/pic/upload",
           data,
           {
             headers: { "Content-Type": "multipart/form-data" },

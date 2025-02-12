@@ -1,8 +1,13 @@
-import { User, Appointment, Message, HealthHistory } from "../models/paldoc.models.js";
+import { User, Appointment, Message, HealthHistory, Chat } from "../models/paldoc.models.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import dotenv from "dotenv";
+import sharp from "sharp";
+import fs from "fs";
+import axios from "axios";
+import dayjs from "dayjs";
 import path from "path";
+const AI_ASSISTANT_ID = "64a123456789abcdef123456";
 
 dotenv.config();
 
@@ -134,19 +139,18 @@ const PalDocController = {
     try {
       const { doctorId, dayOfWeek, startTime, endTime } = req.body;
       const userId = req.user.id;
-  
+
       // Fetch the doctor and patient details
       const doctor = await User.findById(doctorId);
-      const patient = await User.findById(userId); // Fetch the patient's details using the userId
-  
+      const patient = await User.findById(userId);
+
       if (!doctor || !doctor.doctor) {
         return res.status(404).json({ error: "Doctor not found" });
       }
-      
       if (!patient) {
         return res.status(404).json({ error: "Patient not found" });
       }
-  
+
       // Ensure the slot is available
       const slotIndex = doctor.doctor.availability.findIndex(
         (slot) =>
@@ -155,55 +159,43 @@ const PalDocController = {
           slot.dayOfWeek === dayOfWeek &&
           !slot.isBooked
       );
-  
       if (slotIndex === -1) {
         return res.status(400).json({ error: "Slot not available" });
       }
-  
+
       // Mark slot as booked
       doctor.doctor.availability[slotIndex].isBooked = true;
-
-      const doctorChatIndex = doctor.activeChats.findIndex(chat => chat.userId === patient._id);
-      if (doctorChatIndex === -1) {
-        doctor.activeChats.push({
-          userId: patient._id,
-          firstName: patient.firstName,
-          lastName: patient.lastName,
-          pic: patient.pic
-        });
-      }
       await doctor.save();
 
-      const patientChatIndex = patient.activeChats.findIndex(chat => chat.userId === doctor._id);
-      if (patientChatIndex === -1) {
-        patient.activeChats.push({
-          userId: doctor._id,
-          firstName: doctor.firstName,
-          lastName: doctor.lastName,
-          pic: doctor.pic
-        });
+      // Initiate chat between doctor and patient if it doesn't exist
+      let chat = await Chat.findOne({ participants: { $all: [patient._id, doctor._id] } });
+      if (!chat) {
+        chat = await Chat.create({ participants: [patient._id, doctor._id] });
       }
-      await patient.save();
-  
-      // Create the appointment with doctorName and patientName
+
+      // Create the appointment
       const appointment = new Appointment({
         userId,
         doctorId,
-        doctorName: toString(doctor.firstName, doctor.lastName),
-        patientName: toString(patient.firstName, patient.lastName),
+        doctorName: `${doctor.firstName} ${doctor.lastName}`,
+        patientName: `${patient.firstName} ${patient.lastName}`,
         dayOfWeek,
         startTime,
         endTime,
         status: "Booked",
       });
       await appointment.save();
-  
-      res.json({ message: "Appointment booked successfully", appointment });
+
+      res.json({
+        message: "Appointment booked successfully",
+        appointment,
+        chatId: chat._id,
+      });
     } catch (error) {
-      console.log(error);
+      console.error(error);
       res.status(500).json({ error: "Server error" });
     }
-  },   
+  },
 
   getDoctors: async (req, res) => {
     User.find({ doctor: { $ne: null } })
@@ -284,24 +276,37 @@ const PalDocController = {
   getMessages: async (req, res) => {
     try {
       const { chatId } = req.params;
-      const userId = req.user.id;
-      const user = await User.findById(userId)
-      const chat = user.activeChats.find(chat => chat._id.toString() === chatId);
-      const messages = await Message.find(
-          { chatId: chat._id }).sort({ createdAt: 1 });
+      const messages = await Message.find({ chatId }).sort({ createdAt: 1 });
       res.json(messages);
     } catch (error) {
-      console.log(error);
+      console.error(error);
       res.status(500).json({ error: "Failed to fetch messages" });
     }
   },
 
   getActiveChats: async (req, res) => {
     try {
-      const user = await User.findById(req.user.id);
+      const userId = req.user.id;
+      const chats = await Chat.find({ participants: userId })
+        .populate("participants", "firstName lastName pic");
+      
+        const chat = await Chat.findOne({ participants: { $all: [userId.toString(), AI_ASSISTANT_ID.toString()] } });
+        
 
-      res.json(user.activeChats);
+      if (!chat) {
+        const newAIChat = await Chat.create({ participants: [userId, AI_ASSISTANT_ID] });
+        chats.push(newAIChat);
+      }
+      
+      chats.sort((a, b) => {
+        const aIsAI = a.participants.some(p => p._id.toString() === AI_ASSISTANT_ID);
+        const bIsAI = b.participants.some(p => p._id.toString() === AI_ASSISTANT_ID);
+        return aIsAI ? -1 : bIsAI ? 1 : 0;
+      });
+      
+      res.json(chats);
     } catch (error) {
+      console.error(error);
       res.status(500).json({ error: "Failed to fetch active chats" });
     }
   },
@@ -310,25 +315,21 @@ const PalDocController = {
   sendMessage: async (req, res) => {
     try {
       const { msg } = req.body;
-      const {senderId, chatId, message, time} = msg;
-      const user = await User.findById(senderId);
-      const chatIndex = user.activeChats.findIndex(chat => chat._id.toString() === chatId);
-        if (chatIndex === -1) {
-            return res.status(404).json({ error: "Chat not found" });
-        }
+      const {chatId, message, time} = msg;
+      const senderId = req.user.id;
 
-        user.activeChats[chatIndex].lastMessage = message;
-        await user.save();
+      await Chat.findByIdAndUpdate(chatId, { lastMessage: message });
+
       const newMessage = await Message.create({
         senderId,
         chatId,
         message,
-        time
+        time,
       });
 
       res.json(newMessage);
     } catch (error) {
-      console.log(error);
+      console.error(error);
       res.status(500).json({ error: "Failed to send message" });
     }
   },
@@ -364,42 +365,21 @@ const PalDocController = {
 
   startChat: async (req, res) => {
     try {
-      const user = await User.findById(req.user.id);
-      const doctor = await User.findById(req.params.id);
+      const userId = req.user.id;
+      const doctorId = req.params.id;
 
-      if (!user) {
-        return res.status(404).json({ error: "User not found." });
-      }
+      const user = await User.findById(userId);
+      const doctor = await User.findById(doctorId);
+      if (!user) return res.status(404).json({ error: "User not found." });
+      if (!doctor) return res.status(404).json({ error: "Doctor not found." });
 
-      if (!doctor) {
-        return res.status(404).json({ error: "Doctor not found." });
+      let chat = await Chat.findOne({ participants: { $all: [userId, doctorId] } });
+      if (!chat) {
+        chat = await Chat.create({ participants: [userId, doctorId] });
       }
-
-      const chatIndex = user.activeChats.findIndex(chat => chat.userId.toString() === doctor._id.toString());
-      if (chatIndex === -1) {
-        user.activeChats.push({
-          userId: doctor._id,
-          firstName: doctor.firstName,
-          lastName: doctor.lastName,
-          pic: doctor.pic
-        });
-      }
-      await user.save();
-
-      const doctorChatIndex = doctor.activeChats.findIndex(chat => chat.userId === user._id);
-      if (doctorChatIndex === -1) {
-        doctor.activeChats.push({
-          userId: user._id,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          pic: user.pic
-        });
-      }
-      await doctor.save();
-      
-      res.json({ msg: "Chat initiated successfully." });
+      res.json({ msg: "Chat initiated successfully.", chatId: chat._id });
     } catch (error) {
-      console.log(error);
+      console.error(error);
       res.status(500).json({ error: "Internal server error." });
     }
   },
@@ -542,20 +522,78 @@ const PalDocController = {
     }
   },
 
-  // --- New File Upload Method (local storage) ---
+  uploadFilePic: async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "No file provided" });
+    }
+
+    const originalPath = req.file.path;
+    const resizedFilename = `resized-${req.file.filename}`;
+    const resizedPath = path.join(path.dirname(originalPath), resizedFilename);
+
+    await sharp(originalPath)
+      .resize(350, 350)
+      .toFile(resizedPath);
+
+    fs.unlink(originalPath, (err) => {
+      if (err) {
+        console.error("Error deleting original file:", err);
+      }
+    });
+
+    const fileUrl = `${req.protocol}://${req.get("host")}/${resizedPath.replace(/\\/g, "/")}`;
+    
+    res.json({ url: fileUrl });
+  } catch (error) {
+    console.error("File upload error:", error);
+    res.status(500).json({ error: "File upload failed", details: error.message });
+  }
+  },
+
   uploadFile: async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No file provided" });
       }
-      // req.file.path contains the local file path.
-      // Construct a URL for accessing the file. (Assumes you serve the uploads folder statically.)
       const fileUrl = `${req.protocol}://${req.get("host")}/${req.file.path.replace(/\\/g, "/")}`;
       
       res.json({ url: fileUrl });
     } catch (error) {
       console.log("File upload error:", error);
       res.status(500).json({ error: "File upload failed", details: error.message });
+    }
+  },
+  aiChatMessage: async (req, res) => {
+    try {
+      const { message, chatId } = req.body;
+      
+      const userMessage = await Message.create({
+        senderId: req.user.id,
+        chatId,
+        message,
+        time: dayjs().format("HH:mm")
+      });
+      
+      const response = await axios.post(
+        "https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium",
+        { inputs: { text: message } },
+        { headers: { Authorization: `Bearer ${process.env.HUGGINGFACE_API_KEY}` } }
+      );
+      
+      const aiResponseText = response.data.generated_text || "I'm sorry, I couldn't process that.";
+      
+      const aiMessage = await Message.create({
+        senderId: AI_ASSISTANT_ID,
+        chatId,
+        message: aiResponseText,
+        time: dayjs().format("HH:mm")
+      });
+      
+      res.json({ aiResponse: aiResponseText });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Failed to get AI response" });
     }
   },
 };

@@ -73,4 +73,6 @@ export default (app) => {
   app.delete("/api/paldoc/admin/deleteuser/:id", authenticateAdmin, PalDocController.deleteUser);
 
   app.post("/api/paldoc/upload", authenticate, upload.single('file'), PalDocController.uploadFile);
+
+  app.post("/api/paldoc/pic/upload", authenticate, upload.single('file'), PalDocController.uploadFilePic);
 };
