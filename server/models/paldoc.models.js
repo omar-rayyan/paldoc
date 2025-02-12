@@ -115,29 +115,26 @@ UserSchema.pre('save', async function (next) {
 });
 
 const MessageSchema = new mongoose.Schema({
-    userId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true,
-    },
-    doctorId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true,
-    },
     senderId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
+        required: true,
+    },
+    chatId: {
+        type: String,
         required: true,
     },
     message: {
         type: String,
         required: [true, 'Message content is required.'],
     },
-    isRead: {
-        type: Boolean,
-        default: false,
+    lastMessage: {
+        type: String,
     },
+    time: {
+        type: String,
+        required: true,
+    }
 }, { timestamps: true });
 
 const AppointmentSchema = new mongoose.Schema({
