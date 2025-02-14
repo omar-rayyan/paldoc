@@ -1,4 +1,4 @@
-![Screenshot_20250213_175213](https://github.com/user-attachments/assets/e06ffcb9-5d4d-4294-a082-3c61e43553f7)# PalDoc - Online Doctor Consultation System
+# PalDoc - Online Doctor Consultation System
 
 ![White and Green Square Medical Logo (50 x 50 mm)](https://github.com/user-attachments/assets/97b0efb9-ce66-4a1f-b667-f49dcf55047f)
 
