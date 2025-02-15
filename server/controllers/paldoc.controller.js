@@ -133,8 +133,8 @@ const PalDocController = {
         return res.status(404).json({ error: "Doctor not found" });
       }
   
-      const availableSlots = doctor.doctor.availability.filter(slot => !slot.isBooked);
-      res.json(availableSlots);
+      const slots = doctor.doctor.availability;
+      res.json(slots);
     } catch (error) {
       res.status(500).json({ error: "Server error" });
     }
