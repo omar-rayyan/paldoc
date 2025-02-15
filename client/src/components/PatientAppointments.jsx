@@ -32,7 +32,7 @@ export default function PatientAppointments() {
   };
 
   // Filter appointments by status
-  const upcomingAppointments = appointments.filter(appointment => appointment.status === "Pending" || appointment.status === "Upcoming");
+  const upcomingAppointments = appointments.filter(appointment => appointment.status !== "Finished");
   const pastAppointments = appointments.filter(appointment => appointment.status === "Finished");
 
   // Format columns
