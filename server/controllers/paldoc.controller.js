@@ -415,13 +415,11 @@ const PalDocController = {
           slot.isBooked
       );
   
-      if (slotIndex === -1) {
-        return res.status(400).json({ error: "Failed to update doctor's availability slots: Slot not available" });
+      if (slotIndex !== -1) {
+        // Mark slot as free
+        doctor.doctor.availability[slotIndex].isBooked = false;
+        await doctor.save();
       }
-  
-      // Mark slot as free
-      doctor.doctor.availability[slotIndex].isBooked = false;
-      await doctor.save();
   
       res.json({ message: "Appointment marked as finished." });
     } catch (error) {
