@@ -1,4 +1,4 @@
-import { User, Appointment, Message, HealthHistory, Chat } from "../models/paldoc.models.js";
+import { User, Appointment, Message, HealthHistory, Chat, Notification } from "../models/paldoc.models.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import dotenv from "dotenv";
@@ -191,6 +191,16 @@ const PalDocController = {
       });
       await appointment.save();
 
+      // Create notification for doctor
+      await PalDocController.createNotification(
+        doctorId,
+        'appointment_booked',
+        'New Appointment Booked',
+        `${patient.firstName} ${patient.lastName} has booked an appointment for ${startTime} - ${endTime}`,
+        appointment._id,
+        req
+      );
+
       res.json({
         message: "Appointment booked successfully",
         appointment,
@@ -217,6 +227,16 @@ const PalDocController = {
   
       user.doctor.approved = true;
       await user.save();
+
+      // Create notification for doctor
+      await PalDocController.createNotification(
+        user._id,
+        'doctor_approved',
+        'Doctor Account Approved',
+        'Congratulations! Your doctor account has been approved. You can now start accepting appointments.',
+        null,
+        req
+      );
   
       res.status(200).json({ message: "Doctor approved successfully" });
     } catch (error) {
@@ -420,6 +440,19 @@ const PalDocController = {
         doctor.doctor.availability[slotIndex].isBooked = false;
         await doctor.save();
       }
+
+      // Create notification for patient
+      const patient = await User.findById(appointment.userId);
+      if (patient) {
+        await PalDocController.createNotification(
+          appointment.userId,
+          'appointment_finished',
+          'Appointment Completed',
+          `Your appointment with Dr. ${doctor.firstName} ${doctor.lastName} has been completed`,
+          appointment._id,
+          req
+        );
+      }
   
       res.json({ message: "Appointment marked as finished." });
     } catch (error) {
@@ -606,6 +639,122 @@ const PalDocController = {
     } catch (error) {
       console.error(error);
       res.status(500).json({ error: "Failed to get AI response" });
+    }
+  },
+
+  // Helper function to create notifications
+  createNotification: async (userId, type, title, message, relatedId = null, req = null) => {
+    try {
+      const notification = new Notification({
+        userId,
+        type,
+        title,
+        message,
+        relatedId,
+      });
+      await notification.save();
+      
+      // Emit real-time notification if socket is available
+      if (req && req.app.get('io')) {
+        const io = req.app.get('io');
+        // Emit to all connected clients, the socket handler will filter by user
+        io.emit('send_notification', {
+          userId: userId.toString(),
+          notification: notification
+        });
+      }
+      
+      return notification;
+    } catch (error) {
+      console.error("Error creating notification:", error);
+      return null;
+    }
+  },
+
+  // Get notifications for a user
+  getNotifications: async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const notifications = await Notification.find({ userId })
+        .sort({ createdAt: -1 })
+        .limit(50);
+      
+      res.json(notifications);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Failed to fetch notifications" });
+    }
+  },
+
+  // Mark notification as read
+  markNotificationAsRead: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+      
+      const notification = await Notification.findOneAndUpdate(
+        { _id: id, userId },
+        { isRead: true },
+        { new: true }
+      );
+      
+      if (!notification) {
+        return res.status(404).json({ error: "Notification not found" });
+      }
+      
+      res.json(notification);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Failed to mark notification as read" });
+    }
+  },
+
+  // Mark all notifications as read
+  markAllNotificationsAsRead: async (req, res) => {
+    try {
+      const userId = req.user.id;
+      
+      await Notification.updateMany(
+        { userId, isRead: false },
+        { isRead: true }
+      );
+      
+      res.json({ message: "All notifications marked as read" });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Failed to mark notifications as read" });
+    }
+  },
+
+  // Delete notification
+  deleteNotification: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+      
+      const notification = await Notification.findOneAndDelete({ _id: id, userId });
+      
+      if (!notification) {
+        return res.status(404).json({ error: "Notification not found" });
+      }
+      
+      res.json({ message: "Notification deleted" });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Failed to delete notification" });
+    }
+  },
+
+  // Get unread notification count
+  getUnreadNotificationCount: async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const count = await Notification.countDocuments({ userId, isRead: false });
+      
+      res.json({ count });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Failed to get notification count" });
     }
   },
 };

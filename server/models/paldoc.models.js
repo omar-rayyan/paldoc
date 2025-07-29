@@ -185,10 +185,40 @@ const HealthHistorySchema = new mongoose.Schema({
     }
   });
 
+const NotificationSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+  },
+  type: {
+    type: String,
+    enum: ['appointment_booked', 'appointment_cancelled', 'appointment_finished', 'doctor_approved'],
+    required: true,
+  },
+  title: {
+    type: String,
+    required: true,
+  },
+  message: {
+    type: String,
+    required: true,
+  },
+  relatedId: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: false, // Could be appointment ID, doctor ID, etc.
+  },
+  isRead: {
+    type: Boolean,
+    default: false,
+  },
+}, { timestamps: true });
+
 const User = mongoose.model('User', UserSchema);
 const Doctor = mongoose.model('Doctor', DoctorSchema);
 const Appointment = mongoose.model('Appointment', AppointmentSchema);
 const Message = mongoose.model('Message', MessageSchema);
 const HealthHistory = mongoose.model('HealthHistory', HealthHistorySchema);
 const Chat = mongoose.model('Chat', ChatSchema);
-export { User, Doctor, Appointment, Message, HealthHistory, Chat };
+const Notification = mongoose.model('Notification', NotificationSchema);
+export { User, Doctor, Appointment, Message, HealthHistory, Chat, Notification };

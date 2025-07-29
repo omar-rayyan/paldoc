@@ -77,4 +77,11 @@ export default (app) => {
   app.post("/api/paldoc/upload", authenticate, upload.single('file'), PalDocController.uploadFile);
 
   app.post("/api/paldoc/pic/upload", authenticate, upload.single('file'), PalDocController.uploadFilePic);
+
+  // Notification routes
+  app.get("/api/paldoc/notifications", authenticate, PalDocController.getNotifications);
+  app.get("/api/paldoc/notifications/unread-count", authenticate, PalDocController.getUnreadNotificationCount);
+  app.put("/api/paldoc/notifications/:id/read", authenticate, PalDocController.markNotificationAsRead);
+  app.put("/api/paldoc/notifications/mark-all-read", authenticate, PalDocController.markAllNotificationsAsRead);
+  app.delete("/api/paldoc/notifications/:id", authenticate, PalDocController.deleteNotification);
 };

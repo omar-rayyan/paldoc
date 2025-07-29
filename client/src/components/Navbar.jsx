@@ -5,6 +5,7 @@ import { FiMenu } from "react-icons/fi";
 import { notification } from "antd";
 import { RxCross1 } from "react-icons/rx";
 import axios from "axios";
+import NotificationBell from "./NotificationBell";
 
 const Navbar = () => {
   const [iconActive, setIconActive] = useState(false);
@@ -87,6 +88,9 @@ const Navbar = () => {
               </li>
               <li>
                 <NavLink to={"/profile"}>Profile</NavLink>
+              </li>
+              <li style={{ display: 'flex', alignItems: 'center', padding: '0 10px' }}>
+                <NotificationBell />
               </li>
               {user?.isAdmin && (
                 <li>
