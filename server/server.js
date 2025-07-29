@@ -21,6 +21,9 @@ const httpServer = createServer(app);
 
 const io = initializeSocket(httpServer);
 
+// Make io available to routes
+app.set('io', io);
+
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(cookieParser());
 app.use(cors({credentials: true, origin: 'http://localhost:5173'}));

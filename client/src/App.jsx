@@ -14,6 +14,7 @@ import Chat from "./components/Chat";
 import AvailabilitySetupPage from "./components/AvailabilitySetupPage.jsx";
 import DoctorVerificationPage from "./components/DoctorVerificationPage.jsx";
 import PatientQuestionnairePage from "./components/PatientQuestionnairePage.jsx";
+import Notifications from "./components/Notifications.jsx";
 import "./App.css";
 
 function App() {
@@ -34,6 +35,7 @@ function App() {
         <Route path="/patient-questionnaire" element={<PatientQuestionnairePage />} />
         <Route path="/doctor-verification" element={<DoctorVerificationPage />} />
         <Route path="/availability-setup" element={<AvailabilitySetupPage />} />
+        <Route path="/notifications" element={<Notifications />} />
     </Routes>
   );
 }
